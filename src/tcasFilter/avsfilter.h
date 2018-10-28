@@ -24,9 +24,9 @@
 
 #include <windows.h>
 #include "avisynth.h"
-//#include "../../../../../libtcas/trunk/src/alpha/tcas/tcas.h"
-#include "../../../../../libtcas/trunk/src/alpha/tcas/hla_frame_cache.h"
-#include "../../../../../libtcas/trunk/src/alpha/tcas/hla_framer.h"
+//#include "../libtcas/tcas/tcas.h"
+#include "../libtcas/tcas/hla_frame_cache.h"
+#include "../libtcas/tcas/hla_framer.h"
 
 class TcasRenderer : public GenericVideoFilter {
 private:

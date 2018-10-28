@@ -23,9 +23,7 @@
 #pragma once
 
 #include "pix.h"
-//#include "../../../../../../libtcas/trunk/src/alpha/tcas/tcas.h"
-//#include "../../../../../../libtcas/trunk/src/alpha/tcas/hla_z_comp.h"
-#include "../../../../../../libtcas/trunk/src/alpha/tcas/hla_stream_parser.h"
+#include "hla_stream_parser.h"
 
 #define _MAKE16B16B(x, y) ((unsigned long)(((unsigned short)(x)) | (((unsigned long)(y)) << 16)))
 #define _MAKELTP _MAKE16B16B

@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
         if (tcax_entry(argv[1], outFilename) != 0) {
             free(outFilename);
             printf("INFO: Task failed!\n");
-            printf("\n\n温馨提醒: 如果不清楚造成本错误的原因, 请保留本窗口截图以及当前特效工程, \n访问 http://tcax.rhacg.com/forum.php?mod=forumdisplay&fid=38 发帖以获取帮助.\n\n");
+            printf("\n\nTip: If you don't know the cause of this error, please keep the screenshot of this window and the current special effects project.\nAccesses http://tcax.rhacg.com/forum.php?Mod=forumdisplay&fid=38 for help.\n\n");
         } else {
             free(outFilename);
             printf("INFO: Task has been completed!\n");
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
         } else if (TCAX_CMD_PARSE_TCC == tcaxCmd) {
             do {
                 printf("Please enter the TCC filename: ");
-                gets(szFilename);
+				gets_s(szFilename, sizeof(szFilename));//?
                 len = strlen(szFilename);
             }
             while (!(len > 4 && __str_ignore_case_cmp(szFilename + len - 4, ".tcc") == 0));
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
             if (tcax_entry(szFilename, outFilename) != 0) {
                 free(outFilename);
                 printf("INFO: Task failed!\n\n");
-                printf("\n\n温馨提醒: 如果不清楚造成本错误的原因, 请保留本窗口截图以及当前特效工程, \n访问 http://tcax.rhacg.com/forum.php?mod=forumdisplay&fid=38 发帖以获取帮助.\n\n");
+                printf("\n\nTip: If you don't know the cause of this error, please keep the screenshot of this window and the current special effects project.\nAccesses http://tcax.rhacg.com/forum.php?Mod=forumdisplay&fid=38 for help.\n\n");
             } else {
                 free(outFilename);
                 printf("INFO: Task has been completed!\n");
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
         } else if (TCAX_CMD_DEFAULT_PY == tcaxCmd) {
             do {
                 printf("Please enter the tcaxPy script filename: ");
-                gets(szFilename);
+				gets_s(szFilename, 1024);//?
                 len = strlen(szFilename);
             }
             while (!(len > 3 && __str_ignore_case_cmp(szFilename + len - 3, ".py") == 0));
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
         } else if (TCAX_CMD_DEFAULT_TCC == tcaxCmd) {
             do {
                 printf("Please enter the TCC filename: ");
-                gets(szFilename);
+				gets_s(szFilename, 1024);//?
                 len = strlen(szFilename);
             }
             while (!(len > 4 && __str_ignore_case_cmp(szFilename + len - 4, ".tcc") == 0));
@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
         } else if (TCAX_CMD_EXEC_PY == tcaxCmd) {
             do {
                 printf("Please enter the PY filename: ");
-                gets(szFilename);
+				gets_s(szFilename, 1024);//?
                 len = strlen(szFilename);
             }
             while (!(len > 3 && __str_ignore_case_cmp(szFilename + len - 3, ".py") == 0));

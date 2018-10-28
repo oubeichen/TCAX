@@ -118,6 +118,7 @@ namespace MagickCore
 //
 namespace Magick
 {
+#if 1//?
   // The datatype for an RGB component
   using MagickCore::Quantum;
   using MagickCore::MagickSizeType;
@@ -522,6 +523,7 @@ namespace Magick
   using MagickCore::HorizontalTileEdgeVirtualPixelMethod;
   using MagickCore::VerticalTileEdgeVirtualPixelMethod;
   using MagickCore::CheckerTileVirtualPixelMethod;
+#endif
 
 #if defined(MAGICKCORE_IMPLEMENTATION)
   //

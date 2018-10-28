@@ -28,7 +28,7 @@
 #include <string.h>
 
 //#include "../../../../../libtcas/trunk/src/alpha/tcas/tcas.h"
-#include "../../../../../libtcas/trunk/src/alpha/tcas/hla_frame_cache.h"
+#include "../libtcas/tcas/hla_frame_cache.h"
 
 #define TCASFILTER_NAME_W L"TcasFilter"
 #define TCASFILTER_NAME_A "TcasFilter"

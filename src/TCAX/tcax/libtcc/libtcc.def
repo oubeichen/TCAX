@@ -1,0 +1,14 @@
+LIBRARY
+EXPORTS
+ libtcc_read_file_to_unicode @ 1
+ libtcc_write_tcc_string_to_file @ 2
+ libtcc_write_unicode_to_file @ 3
+ libtcc_check_format @ 4
+ libtcc_parse_tcc_string @ 5
+ libtcc_parse_tcc_file @ 6
+ libtcc_info_to_tcax @ 7
+ libtcc_free_attributes @ 8
+ libtcc_free_info @ 9
+ libtcc_convert_attributes_to_tcc_string @ 10
+ libtcc_make_ass_header @ 11
+ libtcc_create_default_tcc_file @ 12
