@@ -1,0 +1,1 @@
+"D:\Program Files\mingw64\bin\mingw32-make.exe" -f Makefile.win32 CFG=release PIXMAN_PATH=../../pixman-0.32.4 LIBPNG_PATH=../../../lpng1530 ZLIB_PATH=../../../zlib-1.2.5
