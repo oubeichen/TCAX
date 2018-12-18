@@ -42,15 +42,18 @@
     <ClCompile Include="..\libtcas\tcas\vector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="vsfilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="avisynth.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="avsfilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="tcasFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vsfilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

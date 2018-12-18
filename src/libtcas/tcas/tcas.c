@@ -646,6 +646,7 @@ __forceinline static tcas_u32 _get_pixels_border(const tcas_byte *buf, long widt
 }
 
 __forceinline static void  _bilinear_fast_MMX(tcas_u32 *pColor0, tcas_u32 *pColor1, unsigned long u_8, unsigned long v_8, tcas_u32 *result) {
+#if false
     __asm {
         MOVD      MM6,v_8
         MOVD      MM5,u_8
@@ -687,6 +688,21 @@ __forceinline static void  _bilinear_fast_MMX(tcas_u32 *pColor0, tcas_u32 *pColo
         movd      [eax],MM0 
         //emms
     }
+#endif
+	unsigned long pm3_16 = u_8 * v_8;
+	unsigned long pm2_16 = (u_8 << 8) - pm3_16;
+	unsigned long pm1_16 = (v_8 << 8) - pm3_16;
+	unsigned long pm0_16 = (1 << 16) - pm1_16 - pm2_16 - pm3_16;
+
+	struct st_tcas_u32 *PColor0 = (struct st_tcas_u32 *)pColor0;
+	struct st_tcas_u32 *PColor1 = (struct st_tcas_u32 *)pColor1;
+	struct st_tcas_u32 *RESULT = (struct st_tcas_u32 *)result;
+
+	RESULT->a = ((pm0_16*PColor0[0].a + pm2_16 * PColor0[1].a + pm1_16 * PColor0[0].a + pm3_16 * PColor1[1].a) >> 16);
+	RESULT->r = ((pm0_16*PColor0[0].r + pm2_16 * PColor0[1].r + pm1_16 * PColor1[0].r + pm3_16 * PColor1[1].r) >> 16);
+	RESULT->g = ((pm0_16*PColor0[0].g + pm2_16 * PColor0[1].g + pm1_16 * PColor1[0].g + pm3_16 * PColor1[1].g) >> 16);
+	RESULT->b = ((pm0_16*PColor0[0].b + pm2_16 * PColor0[1].b + pm1_16 * PColor1[0].b + pm3_16 * PColor1[1].b) >> 16);
+
 }
 
 static void _bilinear_border_MMX(tcas_byte *buf, long width, long height, long x_16, long y_16, tcas_u32 *result) {
@@ -780,7 +796,9 @@ void libtcas_resample_rgba_bilinear_mmx(const tcas_byte *src, tcas_u16 width, tc
         srcy_16 += yrIntFloat_16;
         pDstLine = (tcas_u32 *)((tcas_byte *)pDstLine + dstPitch);
     }
+#if false
     __asm emms
+#endif
 }
 
 /**********************************************/

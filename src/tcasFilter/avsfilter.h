@@ -23,7 +23,7 @@
 #pragma once
 
 #include <windows.h>
-#include "avisynth.h"
+#include "avisynth/avisynth.h"
 //#include "../libtcas/tcas/tcas.h"
 #include "../libtcas/tcas/hla_frame_cache.h"
 #include "../libtcas/tcas/hla_framer.h"
