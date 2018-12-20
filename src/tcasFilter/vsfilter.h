@@ -7,17 +7,18 @@
 #include <atlpath.h>
 #include <atlconv.h>
 #include <iostream>
+#include <utility>
+
 #include "vapoursynth/VapourSynth.h"
 #include "vapoursynth/VSHelper.h"
 #include "../libtcas/tcas/hla_frame_cache.h"
 #include "../libtcas/tcas/hla_framer.h"
 
-using namespace std;
-
 typedef struct {
 	VSNodeRef *node;
 	const VSVideoInfo *vi;
-	char filename[MAX_PATH];
+	//char filename[MAX_PATH];
+	const char *filename;
 	bool bUseFrameCache;      // use m_framer or m_frameCache
 	TCAS_Framer framer;
 	TCAS_FrameCache frameCache;

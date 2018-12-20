@@ -401,7 +401,8 @@ static void VS_CC vsfilterCreate(const VSMap *in, VSMap *out, void *userData, VS
 
 	if (!filename)
 		filename = "";
-	::GetFullPathNameA(filename, MAX_PATH, d.filename, nullptr);
+	d.filename = filename;
+	//::GetFullPathNameA(filename, MAX_PATH, d.filename, nullptr);
 	
 	double fps = vsapi->propGetFloat(in, "fps", 0, &err);
 

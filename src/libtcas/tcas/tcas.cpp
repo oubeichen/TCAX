@@ -23,11 +23,28 @@
 
 #include "tcas.h"
 
+#include <string>
+#include <stdlib.h>
+#include <atlpath.h>
+#include <atlconv.h>
+#include <iostream>
+
 #ifdef _MSC_VER
 #pragma warning(disable: 4996)    /* disable warnings for fopen function() */
 #pragma warning(disable: 4799)    /* disable warnings for emms */
 #endif    /* _MSC_VER */
 
+void libtcas_ansi_to_wchar(wchar_t *pwstr, size_t len, const char *str)
+{
+	if (str)
+	{
+		size_t nu = strlen(str);
+		size_t n = (size_t)MultiByteToWideChar(CP_ACP, 0, (const char *)str, (int)nu, NULL, 0);
+		if (n >= len)n = len - 1;
+		MultiByteToWideChar(CP_ACP, 0, (const char *)str, (int)nu, pwstr, (int)n);
+		pwstr[n] = 0;
+	}
+}
 
 tcas_s32 libtcas_MulDiv(tcas_s32 a, tcas_s32 b, tcas_s32 c) {
     int s;
@@ -50,17 +67,30 @@ tcas_s32 libtcas_MulDiv(tcas_s32 a, tcas_s32 b, tcas_s32 c) {
 }
 
 TCAS_Error_Code libtcas_open_file(TCAS_pFile pFile, const char *filename, TCAS_File_Open_Type type) {
-    if (tcas_file_open_existing == type) {
-        pFile->fp = fopen(filename, "rb");
-        if (!pFile->fp) return tcas_error_file_cannot_open;
-    } else if (tcas_file_create_new == type) {
-        pFile->fp = fopen(filename, "wb");
-        if (!pFile->fp) return tcas_error_file_cannot_create;
-    } else if (tcas_file_read_write == type) {
-        pFile->fp = fopen(filename, "r+b");
-        if (!pFile->fp) return tcas_error_file_cannot_open;
-    }
-    return tcas_error_success;
+	std::string strfile;
+	wchar_t wstrfile[MAX_PATH];
+	CA2WEX<> utf8file(filename, CP_UTF8);
+
+	if (PathFileExistsW(utf8file))
+	{
+		strfile = CW2AEX<>(utf8file, CP_ACP);
+		filename = strfile.c_str();
+	}
+	libtcas_ansi_to_wchar(wstrfile, MAX_PATH, filename);
+
+	if (tcas_file_open_existing == type) {
+		pFile->fp = _wfopen(wstrfile, _T("rb"));
+		if (!pFile->fp) return tcas_error_file_cannot_open;
+	}
+	else if (tcas_file_create_new == type) {
+		pFile->fp = _wfopen(wstrfile, _T("wb"));
+		if (!pFile->fp) return tcas_error_file_cannot_create;
+	}
+	else if (tcas_file_read_write == type) {
+		pFile->fp = _wfopen(wstrfile, _T("r+b"));
+		if (!pFile->fp) return tcas_error_file_cannot_open;
+	}
+	return tcas_error_success;
 }
 
 void libtcas_close_file(TCAS_pFile pFile) {
@@ -698,11 +728,10 @@ __forceinline static void  _bilinear_fast_MMX(tcas_u32 *pColor0, tcas_u32 *pColo
 	struct st_tcas_u32 *PColor1 = (struct st_tcas_u32 *)pColor1;
 	struct st_tcas_u32 *RESULT = (struct st_tcas_u32 *)result;
 
-	RESULT->a = ((pm0_16*PColor0[0].a + pm2_16 * PColor0[1].a + pm1_16 * PColor0[0].a + pm3_16 * PColor1[1].a) >> 16);
-	RESULT->r = ((pm0_16*PColor0[0].r + pm2_16 * PColor0[1].r + pm1_16 * PColor1[0].r + pm3_16 * PColor1[1].r) >> 16);
-	RESULT->g = ((pm0_16*PColor0[0].g + pm2_16 * PColor0[1].g + pm1_16 * PColor1[0].g + pm3_16 * PColor1[1].g) >> 16);
-	RESULT->b = ((pm0_16*PColor0[0].b + pm2_16 * PColor0[1].b + pm1_16 * PColor1[0].b + pm3_16 * PColor1[1].b) >> 16);
-
+	RESULT->a = static_cast<unsigned char>((pm0_16 * PColor0[0].a + pm2_16 * PColor0[1].a + pm1_16 * PColor0[0].a + pm3_16 * PColor1[1].a) >> 16);
+	RESULT->r = static_cast<unsigned char>((pm0_16 * PColor0[0].r + pm2_16 * PColor0[1].r + pm1_16 * PColor1[0].r + pm3_16 * PColor1[1].r) >> 16);
+	RESULT->g = static_cast<unsigned char>((pm0_16 * PColor0[0].g + pm2_16 * PColor0[1].g + pm1_16 * PColor1[0].g + pm3_16 * PColor1[1].g) >> 16);
+	RESULT->b = static_cast<unsigned char>((pm0_16 * PColor0[0].b + pm2_16 * PColor0[1].b + pm1_16 * PColor1[0].b + pm3_16 * PColor1[1].b) >> 16);
 }
 
 static void _bilinear_border_MMX(tcas_byte *buf, long width, long height, long x_16, long y_16, tcas_u32 *result) {

@@ -36,13 +36,13 @@
     <ClCompile Include="..\libtcas\tcas\rb.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\libtcas\tcas\tcas.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\libtcas\tcas\vector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vsfilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libtcas\tcas\tcas.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -162,7 +162,7 @@
     <ClCompile Include="..\libtcas\tcas\hla_z_comp.c" />
     <ClCompile Include="..\libtcas\tcas\queue.c" />
     <ClCompile Include="..\libtcas\tcas\rb.c" />
-    <ClCompile Include="..\libtcas\tcas\tcas.c" />
+    <ClCompile Include="..\libtcas\tcas\tcas.cpp" />
     <ClCompile Include="..\libtcas\tcas\vector.c" />
     <ClCompile Include="avsfilter.cpp" />
     <ClCompile Include="tcasFilter.cpp" />
