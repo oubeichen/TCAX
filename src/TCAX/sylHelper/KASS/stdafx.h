@@ -2,7 +2,7 @@
 #define _STDAFX_H_
 #pragma once
 #ifndef WINVER
-#define WINVER 0x0501
+#define WINVER 0x0601
 #endif
 
 #define LEN_READ      0x00007800             // Max bytes read from an ass script, 30KB
