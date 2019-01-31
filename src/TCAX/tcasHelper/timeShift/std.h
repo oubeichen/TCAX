@@ -25,7 +25,7 @@
 #include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "../../../../../../libtcas/trunk/src/alpha/tcas/hla_util.h"
+#include "../../../libtcas/tcas/hla_util.h"
 
 #endif  /* TIME_SHIFT_STD */
 
