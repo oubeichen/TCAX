@@ -1,5 +1,5 @@
 #ifndef WINVER
-#define WINVER 0x0501
+#define WINVER 0x0601
 #endif
 
 #include <windows.h>

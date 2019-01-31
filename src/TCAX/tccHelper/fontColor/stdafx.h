@@ -2,7 +2,7 @@
 #define __STDAFX_H__
 #pragma once
 #ifndef WINVER
-#define WINVER 0x0501
+#define WINVER 0x0601
 #endif
 
 #include <Windows.h>
