@@ -19,11 +19,11 @@
  */
 
 #include "tcasfunc.h"
-#include "../../../../../../libtcas/trunk/src/alpha/tcas/vector.c"
-#include "../../../../../../libtcas/trunk/src/alpha/tcas/rb.c"
-#include "../../../../../../libtcas/trunk/src/alpha/tcas/tcas.c"
-#include "../../../../../../libtcas/trunk/src/alpha/tcas/hla_z_comp.c"
-#include "../../../../../../libtcas/trunk/src/alpha/tcas/hla_stream_parser.c"
+#include "../../../libtcas/tcas/vector.c"
+#include "../../../libtcas/tcas/rb.c"
+#include "../../../libtcas/tcas/tcas.c"
+#include "../../../libtcas/tcas/hla_z_comp.c"
+#include "../../../libtcas/tcas/hla_stream_parser.c"
 
 
 TCAX_Py_Error_Code tcaxlib_tcas_list_append_pix(PyObject *self, PyObject *args) {

@@ -25,7 +25,7 @@
 #include "pix.h"
 #include "./libpng/png.h"
 #pragma comment(lib, "./libpng/zlib.lib")
-#pragma comment(lib, "./libpng/libpng15.lib")
+#pragma comment(lib, "./libpng/libpng.lib")
 
 
 #define PNG_SIG_BYTES 8
