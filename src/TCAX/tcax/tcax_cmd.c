@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
         } else if (TCAX_CMD_PARSE_TCC == tcaxCmd) {
             do {
                 printf("Please enter the TCC filename: ");
-                gets(szFilename);
+				fgets(szFilename, sizeof(szFilename), stdin);
                 len = strlen(szFilename);
             }
             while (!(len > 4 && __str_ignore_case_cmp(szFilename + len - 4, ".tcc") == 0));
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
         } else if (TCAX_CMD_DEFAULT_PY == tcaxCmd) {
             do {
                 printf("Please enter the tcaxPy script filename: ");
-                gets(szFilename);
+				fgets(szFilename, sizeof(szFilename), stdin);
                 len = strlen(szFilename);
             }
             while (!(len > 3 && __str_ignore_case_cmp(szFilename + len - 3, ".py") == 0));
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
         } else if (TCAX_CMD_DEFAULT_TCC == tcaxCmd) {
             do {
                 printf("Please enter the TCC filename: ");
-                gets(szFilename);
+				fgets(szFilename, sizeof(szFilename), stdin);
                 len = strlen(szFilename);
             }
             while (!(len > 4 && __str_ignore_case_cmp(szFilename + len - 4, ".tcc") == 0));
@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
         } else if (TCAX_CMD_EXEC_PY == tcaxCmd) {
             do {
                 printf("Please enter the PY filename: ");
-                gets(szFilename);
+				fgets(szFilename, sizeof(szFilename), stdin);
                 len = strlen(szFilename);
             }
             while (!(len > 3 && __str_ignore_case_cmp(szFilename + len - 3, ".py") == 0));
