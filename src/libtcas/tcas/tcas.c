@@ -647,60 +647,60 @@ __forceinline static tcas_u32 _get_pixels_border(const tcas_byte *buf, long widt
 }
 
 __forceinline static void  _bilinear_fast_MMX(tcas_u32 *pColor0, tcas_u32 *pColor1, unsigned long u_8, unsigned long v_8, tcas_u32 *result) {
-	
-	__m128i v_8p = _mm_loadu_si32(&v_8); //MOVD XMM6, v_8
-	__m128i u_8p = _mm_loadu_si32(&u_8); //MOVD XMM5, u_8
-	//mov edx, pColor0
-	//mov eax, pColor1
-	__m128i zeros = _mm_setzero_si128(); //PXOR xmm7, xmm7
+    
+    __m128i v_8p = _mm_loadu_si32(&v_8); //MOVD XMM6, v_8
+    __m128i u_8p = _mm_loadu_si32(&u_8); //MOVD XMM5, u_8
+    //mov edx, pColor0
+    //mov eax, pColor1
+    __m128i zeros = _mm_setzero_si128(); //PXOR xmm7, xmm7
 
-	__m128i pColor1_0 = _mm_loadu_si32(&pColor1[0]); //MOVD XMM2, dword ptr[eax]
-	__m128i pColor1_1 = _mm_loadu_si32(&pColor1[1]); //MOVD XMM0, dword ptr[eax + 4]
-	//xmm5 = u_8p, xmm6 = v_8p
-	u_8p = _mm_unpacklo_epi16(u_8p, u_8p); //PUNPCKLWD XMM5, XMM5
-	v_8p = _mm_unpacklo_epi16(v_8p, v_8p); //PUNPCKLWD XMM6, XMM6
-	
-	__m128i pColor0_0 = _mm_loadu_si32(&pColor0[0]); //MOVD XMM3, dword ptr[edx]
-	__m128i pColor0_1 = _mm_loadu_si32(&pColor0[1]); //MOVD XMM1, dword ptr[edx + 4]
-	u_8p = _mm_unpacklo_epi32(u_8p, u_8p); //PUNPCKLDQ XMM5, XMM5
+    __m128i pColor1_0 = _mm_loadu_si32(&pColor1[0]); //MOVD XMM2, dword ptr[eax]
+    __m128i pColor1_1 = _mm_loadu_si32(&pColor1[1]); //MOVD XMM0, dword ptr[eax + 4]
+    //xmm5 = u_8p, xmm6 = v_8p
+    u_8p = _mm_unpacklo_epi16(u_8p, u_8p); //PUNPCKLWD XMM5, XMM5
+    v_8p = _mm_unpacklo_epi16(v_8p, v_8p); //PUNPCKLWD XMM6, XMM6
+    
+    __m128i pColor0_0 = _mm_loadu_si32(&pColor0[0]); //MOVD XMM3, dword ptr[edx]
+    __m128i pColor0_1 = _mm_loadu_si32(&pColor0[1]); //MOVD XMM1, dword ptr[edx + 4]
+    u_8p = _mm_unpacklo_epi32(u_8p, u_8p); //PUNPCKLDQ XMM5, XMM5
 
-	/*
-	xmm0 = pColor1_1, xmm1 = pColor0_1
-	xmm2 = pColor1_0, xmm3 = pColor0_0
-	xmm5 = u_8p, xmm6 = v_8p
-	xmm7 = zeros
-	*/
-	pColor1_1 = _mm_unpacklo_epi8(pColor1_1, zeros); //PUNPCKLBW XMM0, XMM7
-	pColor0_1 = _mm_unpacklo_epi8(pColor0_1, zeros); //PUNPCKLBW XMM1, XMM7
-	pColor1_0 = _mm_unpacklo_epi8(pColor1_0, zeros); //PUNPCKLBW XMM2, XMM7
-	pColor0_0 = _mm_unpacklo_epi8(pColor0_0, zeros); //PUNPCKLBW XMM3, XMM7
-	pColor1_1 = _mm_sub_epi16(pColor1_1, pColor1_0); //PSUBw XMM0, XMM2
-	pColor0_1 = _mm_sub_epi16(pColor0_1, pColor0_0); //PSUBw XMM1, XMM3
-	pColor1_0 = _mm_slli_epi16(pColor1_0, 8); //PSLLw XMM2, 8
-	pColor0_0 = _mm_slli_epi16(pColor0_0, 8); //PSLLw XMM3, 8
-	pColor1_1 = _mm_mullo_epi16(pColor1_1, u_8p); //PMULlw XMM0, XMM5
-	pColor0_1 = _mm_mullo_epi16(pColor0_1, u_8p); //PMULlw XMM1, XMM5
-	v_8p = _mm_unpacklo_epi32(v_8p, v_8p); //PUNPCKLDQ XMM6, XMM6
-	pColor1_1 = _mm_add_epi16(pColor1_1, pColor1_0); //PADDw XMM0, XMM2
-	pColor0_1 = _mm_add_epi16(pColor0_1, pColor0_0); //PADDw XMM1, XMM3
-	
-	pColor1_1 = _mm_srli_epi16(pColor1_1, 8); //PSRLw XMM0, 8
-	pColor0_1 = _mm_srli_epi16(pColor0_1, 8); //PSRLw XMM1, 8
-	pColor1_1 = _mm_sub_epi16(pColor1_1, pColor0_1); //PSUBw XMM0, XMM1
-	pColor0_1 = _mm_slli_epi16(pColor0_1, 8); //PSLLw XMM1, 8
-	pColor1_1 = _mm_mullo_epi16(pColor1_1, v_8p); //PMULlw XMM0, XMM6
-	//mov eax, result
-	pColor1_1 = _mm_add_epi16(pColor1_1, pColor0_1); //PADDw XMM0, XMM1
+    /*
+    xmm0 = pColor1_1, xmm1 = pColor0_1
+    xmm2 = pColor1_0, xmm3 = pColor0_0
+    xmm5 = u_8p, xmm6 = v_8p
+    xmm7 = zeros
+    */
+    pColor1_1 = _mm_unpacklo_epi8(pColor1_1, zeros); //PUNPCKLBW XMM0, XMM7
+    pColor0_1 = _mm_unpacklo_epi8(pColor0_1, zeros); //PUNPCKLBW XMM1, XMM7
+    pColor1_0 = _mm_unpacklo_epi8(pColor1_0, zeros); //PUNPCKLBW XMM2, XMM7
+    pColor0_0 = _mm_unpacklo_epi8(pColor0_0, zeros); //PUNPCKLBW XMM3, XMM7
+    pColor1_1 = _mm_sub_epi16(pColor1_1, pColor1_0); //PSUBw XMM0, XMM2
+    pColor0_1 = _mm_sub_epi16(pColor0_1, pColor0_0); //PSUBw XMM1, XMM3
+    pColor1_0 = _mm_slli_epi16(pColor1_0, 8); //PSLLw XMM2, 8
+    pColor0_0 = _mm_slli_epi16(pColor0_0, 8); //PSLLw XMM3, 8
+    pColor1_1 = _mm_mullo_epi16(pColor1_1, u_8p); //PMULlw XMM0, XMM5
+    pColor0_1 = _mm_mullo_epi16(pColor0_1, u_8p); //PMULlw XMM1, XMM5
+    v_8p = _mm_unpacklo_epi32(v_8p, v_8p); //PUNPCKLDQ XMM6, XMM6
+    pColor1_1 = _mm_add_epi16(pColor1_1, pColor1_0); //PADDw XMM0, XMM2
+    pColor0_1 = _mm_add_epi16(pColor0_1, pColor0_0); //PADDw XMM1, XMM3
+    
+    pColor1_1 = _mm_srli_epi16(pColor1_1, 8); //PSRLw XMM0, 8
+    pColor0_1 = _mm_srli_epi16(pColor0_1, 8); //PSRLw XMM1, 8
+    pColor1_1 = _mm_sub_epi16(pColor1_1, pColor0_1); //PSUBw XMM0, XMM1
+    pColor0_1 = _mm_slli_epi16(pColor0_1, 8); //PSLLw XMM1, 8
+    pColor1_1 = _mm_mullo_epi16(pColor1_1, v_8p); //PMULlw XMM0, XMM6
+    //mov eax, result
+    pColor1_1 = _mm_add_epi16(pColor1_1, pColor0_1); //PADDw XMM0, XMM1
 
-	/*
-	xmm0 = pColor1_1, xmm1 = pColor0_1
-	xmm2 = pColor1_0, xmm3 = pColor0_0
-	xmm5 = u_8p, xmm6 = v_8p
-	xmm7 = zeros
-	*/
-	pColor1_1 = _mm_srli_epi16(pColor1_1, 8); //PSRLw XMM0, 8
-	pColor1_1 = _mm_packus_epi16(pColor1_1, zeros); //PACKUSwb XMM0, XMM7
-	_mm_storeu_si32(&result[0], pColor1_1); //movd [eax], XMM0
+    /*
+    xmm0 = pColor1_1, xmm1 = pColor0_1
+    xmm2 = pColor1_0, xmm3 = pColor0_0
+    xmm5 = u_8p, xmm6 = v_8p
+    xmm7 = zeros
+    */
+    pColor1_1 = _mm_srli_epi16(pColor1_1, 8); //PSRLw XMM0, 8
+    pColor1_1 = _mm_packus_epi16(pColor1_1, zeros); //PACKUSwb XMM0, XMM7
+    _mm_storeu_si32(&result[0], pColor1_1); //movd [eax], XMM0
 }
 
 static void _bilinear_border_MMX(tcas_byte *buf, long width, long height, long x_16, long y_16, tcas_u32 *result) {
@@ -794,7 +794,7 @@ void libtcas_resample_rgba_bilinear_mmx(const tcas_byte *src, tcas_u16 width, tc
         srcy_16 += yrIntFloat_16;
         pDstLine = (tcas_u32 *)((tcas_byte *)pDstLine + dstPitch);
     }
-	//__asm emms ;use sse2, so it don't need anymore.
+    //__asm emms ;use sse2, so it don't need anymore.
 }
 
 /**********************************************/
