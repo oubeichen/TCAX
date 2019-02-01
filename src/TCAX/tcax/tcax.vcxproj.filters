@@ -18,9 +18,6 @@
     <ClCompile Include="tcax.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tcax_cmd.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="tcaxPy\py.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -55,6 +52,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\libtcas\tcas\vector.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tcax_cmd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

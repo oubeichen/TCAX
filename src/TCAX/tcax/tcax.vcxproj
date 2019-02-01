@@ -173,7 +173,12 @@
     <ClCompile Include="libtm\tm.c" />
     <ClCompile Include="tcax.c" />
     <ClCompile Include="tcaxPy\py.c" />
-    <ClCompile Include="tcax_cmd.c" />
+    <ClCompile Include="tcax_cmd.cpp">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\libtcas\tcas\hla_z_comp.h" />
