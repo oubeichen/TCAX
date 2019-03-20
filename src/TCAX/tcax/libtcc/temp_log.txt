@@ -1,3 +1,0 @@
-﻿Change blur from int to double
-
-Added TCC_InfoToTcx structure and related functions libtcc_info_to_tcx() and libtcc_free_info()
