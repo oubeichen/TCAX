@@ -8,12 +8,10 @@ Run on Microsoft Windows (XP/Vista/7/etc.)
 
 Visit TCAX homepage www.tcax.org for more info.
 
-**DO NOT COMPILE THIS BRANCH.**
-
 ## Dependency
 
 - c++14
-- boost c++ library
+- boost c++ libraries
 - libpng
 - freetype2
 - zlib
