@@ -6,6 +6,8 @@ add_library(tcaxLib SHARED
         file.cpp
         text.h
         text.cpp
+        image.h
+        image.cpp
         python/tcaxlib.cpp)
 
 #boost
@@ -22,6 +24,11 @@ LIST(APPEND tcaxLib_libs ${Python_LIBRARIES})
 find_package(Freetype 2.9 REQUIRED)
 LIST(APPEND tcaxLib_includes ${FREETYPE_INCLUDE_DIRS})
 LIST(APPEND tcaxLib_libs ${FREETYPE_LIBRARIES})
+
+#libpng
+find_package(PNG 1.6.36 REQUIRED)
+LIST(APPEND tcaxLib_includes ${PNG_INCLUDE_DIRS})
+LIST(APPEND tcaxLib_libs ${PNG_LIBRARIES})
 
 target_link_libraries(tcaxLib ${tcaxLib_libs})
 target_include_directories(tcaxLib PUBLIC ${tcaxLib_includes})
