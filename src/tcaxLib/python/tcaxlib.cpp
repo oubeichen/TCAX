@@ -22,8 +22,7 @@
 #include "../pix.h"
 #include "../text.h"
 #include "../image.h"
-//#include "utility.h"
-//#include "tcasfunc.h"
+#include "../utility.h"
 
 const char *tcaxlib_get_version()
 {
@@ -83,27 +82,17 @@ BOOST_PYTHON_MODULE(tcaxLib)
     /* in image.h */
     py::def("ImagePix",          tcaxlib_get_pix_from_image, ImagePix_overloads()); //ImagePix(filename, width = 0, height = 0)
     py::def("SavePix",           tcaxlib_save_pix_to_image, SavePix_overloads());   //SavePix(filename, PIX, width = 0, height = 0)
+
+    /* in utility.h */
+    py::def("TextOutlineDraw",   tcaxlib_get_text_outline_as_string);               //TextOutlineDraw(pyFont, text, x, y)
+    py::def("TextOutlineDraw",   tcaxlib_get_text_outline_as_string_2);             //TextOutlineDraw(font_file, face_id, font_size, text, x, y)
+    py::def("IsCjk",             tcaxlib_is_c_or_j_or_k);                           //IsCjk(text)
+    py::def("VertLayout",        tcaxlib_vertical_layout_ass);                      //VertLayout(text)
+    py::def("ShowProgress",      tcaxlib_show_progress);                            //ShowProgress(total, completed, file_id, file_num)
+    py::def("Bezier1",           tcaxlib_bezier_curve_linear);                      //Bezier1(nPoints, xs, ys, xe, ye)
+    py::def("Bezier2",           tcaxlib_bezier_curve_quadratic);                   //Bezier2(nPoints, xs, ys, xe, ye, xc, yc)
+    py::def("Bezier3",           tcaxlib_bezier_curve_cubic);                       //Bezier3(nPoints, xs, ys, xe, ye, xc1, yc1, xc2, yc2)
+    py::def("BezierN",           tcaxlib_bezier_curve_random);                      //BezierN(nPoints, xs, ys, xe, ye, xl1, yl1, xl2, yl2, order)
+    py::def("GetFontSize",       tcaxlib_get_actual_font_size);                     //GetFontSize(font_file, face_id, font_size)
+    py::def("CairoFontSize",     tcaxlib_calc_cairo_font_size);                     //CairoFontSize(font_file, face_id, font_size)
 }
-
-/*
-static PyMethodDef tcaxLib_Methods[] = {
-    in utility.h
-    { "TextOutlineDraw"   ,  tcaxlib_get_text_outline_as_string      ,  METH_VARARGS ,  "TextOutlineDraw(pyFont, text, x, y) or TextOutlineDraw(font_file, face_id, font_size, text, x, y)" },
-    { "IsCjk"             ,  tcaxlib_is_c_or_j_or_k                  ,  METH_VARARGS ,  "IsCjk(text)" },
-    { "VertLayout"        ,  tcaxlib_vertical_layout_ass             ,  METH_VARARGS ,  "VertLayout(text)" },
-    { "ShowProgress"      ,  tcaxlib_show_progress                   ,  METH_VARARGS ,  "ShowProgress(total, completed, file_id, file_num)" },
-    { "Bezier1"           ,  tcaxlib_bezier_curve_linear             ,  METH_VARARGS ,  "Bezier1(nPoints, xs, ys, xe, ye)" },
-    { "Bezier2"           ,  tcaxlib_bezier_curve_quadratic          ,  METH_VARARGS ,  "Bezier2(nPoints, xs, ys, xe, ye, xc, yc)" },
-    { "Bezier3"           ,  tcaxlib_bezier_curve_cubic              ,  METH_VARARGS ,  "Bezier3(nPoints, xs, ys, xe, ye, xc1, yc1, xc2, yc2)" },
-    { "BezierN"           ,  tcaxlib_bezier_curve_random             ,  METH_VARARGS ,  "BezierN(nPoints, xs, ys, xe, ye, xl1, yl1, xl2, yl2, order)" },
-    { "GetFontSize"       ,  tcaxlib_get_actual_font_size            ,  METH_VARARGS ,  "GetFontSize(font_file, face_id, font_size)" },
-    { "CairoFontSize"     ,  tcaxlib_calc_cairo_font_size            ,  METH_VARARGS ,  "CairoFontSize(font_file, face_id, font_size)" },
-
-    in tcasfunc.h
-    { "tcas_main"         ,  tcaxlib_tcas_list_append_pix            ,  METH_VARARGS ,  "tcas_main(TCAS_BUF, pix, start, end, offsetX, offsetY, layer)" },
-    { "tcas_keyframe"     ,  tcaxlib_tcas_list_append_key_pixs       ,  METH_VARARGS ,  "tcas_keyframe(TCAS_BUF, pix_start, pix_end, start, end, offsetX, offsetY, type, layer)" },
-    { "tcas_parse"        ,  tcaxlib_tcas_list_parse                 ,  METH_VARARGS ,  "tcas_parse(TCAS_BUF, width, height, fps, layer)" },
-    { NULL                ,  NULL                                    ,  0            ,  NULL }
-};
-
-*/

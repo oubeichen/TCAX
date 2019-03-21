@@ -8,6 +8,8 @@ add_library(tcaxLib SHARED
         text.cpp
         image.h
         image.cpp
+        utility.h
+        utility.cpp
         python/tcaxlib.cpp)
 
 #boost
