@@ -33,5 +33,24 @@ namespace py = boost::python;
  */
 typedef py::long_ TCAX_Py_Error_Code;
 
+class common
+{
+public:
+
+    common() : success(false)
+    {}
+
+    ~common(){}
+
+    bool is_success() const
+    {
+        return success;
+    }
+
+protected:
+
+    bool success;
+};
+
 #endif    /* TCAXLIB_STD_H */
 

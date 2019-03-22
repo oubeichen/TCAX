@@ -23,7 +23,439 @@
 
 using namespace std;
 
-static void _tcaxlib_face_set_size(FT_Face face, int size)
+/* Bezier Curve Evaluation using De Casteljau's Algorithm */
+void linear_interpolation(double *pxt, double *pyt,
+                          double xa, double ya,
+                          double xb, double yb,
+                          double t)
+{
+    *pxt = xa + (xb - xa) * t;
+    *pyt = ya + (yb - ya) * t;
+}
+
+void conic_bezier(double *pxt, double *pyt,
+                  double xs, double ys,
+                  double xc, double yc,
+                  double xe, double ye,
+                  double t)
+{
+    double xsc, ysc, xce, yce;
+    linear_interpolation(&xsc, &ysc, xs, ys, xc, yc, t);
+    linear_interpolation(&xce, &yce, xc, yc, xe, ye, t);
+    linear_interpolation(pxt, pyt, xsc, ysc, xce, yce, t);
+}
+
+void cubic_bezier(double *pxt, double *pyt,
+                  double xs, double ys,
+                  double xc1, double yc1,
+                  double xc2, double yc2,
+                  double xe, double ye,
+                  double t)
+{
+    double x10, y10, x11, y11, x12, y12, x20, y20, x21, y21;    /* 00 = s, 01 = c1, 02 = c2, 03 = e */
+    linear_interpolation(&x10, &y10, xs, ys, xc1, yc1, t);
+    linear_interpolation(&x11, &y11, xc1, yc1, xc2, yc2, t);
+    linear_interpolation(&x12, &y12, xc2, yc2, xe, ye, t);
+    linear_interpolation(&x20, &y20, x10, y10, x11, y11, t);
+    linear_interpolation(&x21, &y21, x11, y11, x12, y12, t);
+    linear_interpolation(pxt, pyt, x20, y20, x21, y21, t);
+}
+
+double _max_distance_3(double x1, double x2, double x3)
+{
+    double left, right;
+    left = x1;
+    if (left > x2)
+        left = x2;
+    if (left > x3)
+        left = x3;
+    right = x3;
+    if (right < x2)
+        right = x2;
+    if (right < x1)
+        right = x1;
+    return right - left;
+}
+
+double _max_distance_4(double x1, double x2, double x3, double x4)
+{
+    double left, right;
+    left = x1;
+    if (left > x2)
+        left = x2;
+    if (left > x3)
+        left = x3;
+    if (left > x4)
+        left = x4;
+    right = x4;
+    if (right < x3)
+        right = x3;
+    if (right < x2)
+        right = x2;
+    if (right < x1)
+        right = x1;
+    return right - left;
+}
+
+int _outline_points_move_to(const FT_Vector *to, void *user)
+{
+    TCAX_pOutlinePoints pOutline = (TCAX_pOutlinePoints)user;
+    tcaxlib_points_append(&pOutline->points, to->x / 64.0, pOutline->height - to->y / 64.0, 255);
+    pOutline->lastX = to->x / 64.0;
+    pOutline->lastY = to->y / 64.0;
+    return 0;
+}
+
+int _outline_points_line_to(const FT_Vector *to, void *user)
+{
+    double xs, ys, xe, ye, x, y, t, step;
+    /* int i, points; */
+    TCAX_pOutlinePoints pOutline = (TCAX_pOutlinePoints)user;
+    xs = pOutline->lastX;
+    ys = pOutline->lastY;
+    xe = to->x / 64.0;
+    ye = to->y / 64.0;
+    step = 1 / (max(abs(xe - xs), abs(ye - ys)) * pOutline->density);
+    for (t = step; t < 1 + step; t += step) {
+        linear_interpolation(&x, &y, xs, ys, xe, ye, t);
+        tcaxlib_points_append(&pOutline->points, x, pOutline->height - y, 255);
+    }
+    pOutline->lastX = xe;
+    pOutline->lastY = ye;
+    return 0;
+}
+
+int _outline_points_conic_to(const FT_Vector *control, const FT_Vector *to, void *user)
+{
+    double xs, ys, xc, yc, xe, ye, x, y, t, step;
+    /* int i, points; */
+    TCAX_pOutlinePoints pOutline = (TCAX_pOutlinePoints)user;
+    xs = pOutline->lastX;
+    ys = pOutline->lastY;
+    xc = control->x / 64.0;
+    yc = control->y / 64.0;
+    xe = to->x / 64.0;
+    ye = to->y / 64.0;
+    step = 1 / (max(_max_distance_3(xs, xc, xe), _max_distance_3(ys, yc, ye)) * pOutline->density);
+    for (t = step; t < 1 + step; t += step) {
+        conic_bezier(&x, &y, xs, ys, xc, yc, xe, ye, t);
+        tcaxlib_points_append(&pOutline->points, x, pOutline->height - y, 255);
+    }
+
+    pOutline->lastX = xe;
+    pOutline->lastY = ye;
+    return 0;
+}
+
+int _outline_points_cubic_to(const FT_Vector *control1, const FT_Vector *control2, const FT_Vector *to, void *user)
+{
+    double xs, ys, xc1, yc1, xc2, yc2, xe, ye, x, y, t, step;
+    TCAX_pOutlinePoints pOutline = (TCAX_pOutlinePoints)user;
+    xs = pOutline->lastX;
+    ys = pOutline->lastY;
+    xc1 = control1->x / 64.0;
+    yc1 = control1->y / 64.0;
+    xc2 = control2->x / 64.0;
+    yc2 = control2->y / 64.0;
+    xe = to->x / 64.0;
+    ye = to->y / 64.0;
+    step = 1 / (max(_max_distance_4(xs, xc1, xc2, xe), _max_distance_4(ys, yc1, yc2, ye)) * pOutline->density);
+    for (t = step; t < 1 + step; t += step) {
+        cubic_bezier(&x, &y, xs, ys, xc1, yc1, xc2, yc2, xe, ye, t);
+        tcaxlib_points_append(&pOutline->points, x, pOutline->height - y, 255);
+    }
+    pOutline->lastX = xe;
+    pOutline->lastY = ye;
+    return 0;
+}
+
+text::text(const char *font_file, int face_id, int font_size, int spacing,
+           double space_scale, uint32_t color, int bord, int is_outline)
+    : pFont(new TCAX_Font)
+{
+    common();
+
+    char *tmp_str = new char[strlen(font_file) + 1]();
+    memcpy(tmp_str, font_file, strlen(font_file));
+    tmp_str[strlen(font_file)] = '\0';
+
+    if (init_font(pFont, tmp_str, face_id, font_size, spacing,
+                  space_scale, color, bord, is_outline) != 0)
+    {
+        delete[] pFont->filename;
+        pFont->filename = nullptr;
+        delete pFont;
+        pFont = nullptr;
+        success = false;
+        PyErr_SetString(PyExc_RuntimeError, "TextPix error, failed to initialize the font!\n");
+    }
+
+    success = true;
+}
+
+text::~text()
+{
+    fin_font(this->pFont);
+    if (pFont != nullptr)
+    {
+        delete[] pFont->filename;
+        delete pFont;
+        pFont = nullptr;
+    }
+}
+
+//TextPix(pyFont, texts)
+TCAX_PyPix text::get_pix_from_text(const char *texts)
+{
+    TCAX_Pix pix;
+    const wchar_t *text;
+
+    std::string src_string = std::string(texts);
+    std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
+    text = dst_string.c_str();
+    if (wcslen(text) <= 1)
+    {
+        if (get_text_pix(this->pFont, text[0], &pix) != 0)
+        {
+            PyErr_SetString(PyExc_RuntimeError, "TextPix error, failed to get the PIX!\n");
+            return py::tuple();
+        }
+    }
+    else
+    {
+        if (get_texts_pix(this->pFont, text, &pix) != 0)
+        {
+            PyErr_SetString(PyExc_RuntimeError, "TextPix error, failed to get the PIX!\n");
+            return py::tuple();
+        }
+    }
+
+    return tcaxlib_convert_pix(&pix, 1);
+}
+
+TCAX_PyPix text::get_pix_from_text_2(const char *font_file, int face_id, int font_size, int spacing,
+                                     double space_scale, uint32_t color, int bord, int is_outline,
+                                     const char *texts)
+{
+    TCAX_Font font;
+    TCAX_Pix pix;
+    const wchar_t *text;
+    std::string src_string = std::string(texts);
+    std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
+    text = dst_string.c_str();
+
+    char *tmp_str = new char[strlen(font_file) + 1]();
+    memcpy(tmp_str, font_file, strlen(font_file));
+    tmp_str[strlen(font_file)] = '\0';
+
+    if (init_font(&font, tmp_str, face_id, font_size, spacing, space_scale, color, bord, is_outline) != 0)
+    {
+        delete[] font.filename;
+        PyErr_SetString(PyExc_RuntimeError, "TextPix error, failed to initialize the font!\n");
+        return py::tuple();
+    }
+    if (wcslen(text) <= 1)
+    {
+        if (get_text_pix(&font, text[0], &pix) != 0)
+        {
+            delete[] font.filename;
+            fin_font(&font);
+            PyErr_SetString(PyExc_RuntimeError, "TextPix error, failed to get the PIX!\n");
+            return py::tuple();
+        }
+    }
+    else
+    {
+        if (get_texts_pix(&font, text, &pix) != 0)
+        {
+            delete[] font.filename;
+            fin_font(&font);
+            PyErr_SetString(PyExc_RuntimeError, "TextPix error, failed to get the PIX!\n");
+            return py::tuple();
+        }
+    }
+
+    fin_font(&font);
+    delete[] font.filename;
+    return tcaxlib_convert_pix(&pix, 1);
+}
+
+//TextOutlinePoints(pyFont, text, density)
+TCAX_PyPoints text::get_text_outline_as_points(const char *text, double density)
+{
+    const wchar_t *texts;
+    double *xBuf, *yBuf;
+    unsigned char *aBuf;
+    int i, count;
+    py::list pyPoints;
+    py::tuple pyPointTemp;
+
+    std::string src_string = std::string(text);
+    std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
+    texts = dst_string.c_str();
+
+    if (get_text_outline_points(pFont, texts[0], density, &xBuf, &yBuf, &aBuf, &count) != 0)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "TextOutlinePoints error, failed to get the outline!\n");
+        return py::tuple();
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        pyPointTemp = py::make_tuple(xBuf[i], yBuf[i], aBuf[i]);
+        pyPoints.append(pyPointTemp);
+    }
+
+    delete xBuf;
+    delete yBuf;
+    delete aBuf;
+    return py::tuple(pyPoints);
+}
+
+//TextOutlinePoints(font_file, face_id, font_size, text, density)
+TCAX_PyPoints text::get_text_outline_as_points_2(const char *font_file, int face_id, int font_size,
+                                                 const char *text, double density)
+{
+    const wchar_t *texts;
+    TCAX_Font font;
+    double *xBuf, *yBuf;
+    unsigned char *aBuf;
+    int i, count;
+    py::list pyPoints;
+    py::tuple pyPointTemp;
+
+    std::string src_string = std::string(text);
+    std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
+    texts = dst_string.c_str();
+
+    char *tmp_str = new char[strlen(font_file) + 1]();
+    memcpy(tmp_str, font_file, strlen(font_file));
+    tmp_str[strlen(font_file)] = '\0';
+
+    if (init_font(&font, tmp_str, face_id, font_size, 0, 0, 0, 0, 0) != 0)
+    {
+        delete[] font.filename;
+        PyErr_SetString(PyExc_RuntimeError, "TextOutlinePoints error, failed to initialize the font!\n");
+        return py::tuple();
+    }
+
+    if (get_text_outline_points(&font, texts[0], density, &xBuf, &yBuf, &aBuf, &count) != 0)
+    {
+        fin_font(&font);
+        delete[] font.filename;
+        PyErr_SetString(PyExc_RuntimeError, "TextOutlinePoints error, failed to get the outline!\n");
+        return py::tuple();
+    }
+
+    fin_font(&font);
+    delete[] font.filename;
+
+    for (i = 0; i < count; i++)
+    {
+        pyPointTemp = py::make_tuple(xBuf[i], yBuf[i], aBuf[i]);
+        pyPoints.append(pyPointTemp);
+    }
+
+    delete xBuf;
+    delete yBuf;
+    delete aBuf;
+    return py::tuple(pyPoints);
+}
+
+//TextMetrics(pyFont, text)
+TCAX_PyTextMetrics text::get_text_metrics(const char *text)
+{
+    TCAX_TextMetrics textMetrics;
+    const wchar_t *texts;
+
+    std::string src_string = std::string(text);
+    std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
+    texts = dst_string.c_str();
+
+    if (_tcax_lib_get_text_metrics(pFont, texts, &textMetrics) != 0)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "TextMetrics error, failed to get the text metrics!\n");
+        return py::tuple();
+    }
+
+    return convert_text_metrics(&textMetrics);
+}
+
+//TextMetrics(font_file, face_id, font_size, spacing, space_scale, text)
+TCAX_PyTextMetrics text::get_text_metrics_2(const char *font_file, int face_id, int font_size, int spacing,
+                                            double space_scale, const char *text)
+{
+    const wchar_t *texts;
+    TCAX_Font font;
+    TCAX_TextMetrics textMetrics;
+
+    std::string src_string = std::string(text);
+    std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
+    texts = dst_string.c_str();
+
+    char *tmp_str = new char[strlen(font_file) + 1]();
+    memcpy(tmp_str, font_file, strlen(font_file));
+    tmp_str[strlen(font_file)] = '\0';
+
+    if (init_font(&font, tmp_str, face_id, font_size, spacing, space_scale, 0, 0, 0) != 0)
+    {
+        delete[] font.filename;
+        PyErr_SetString(PyExc_RuntimeError, "TextMetrics error, failed to initialize the font!\n");
+        return py::tuple();
+    }
+    if (_tcax_lib_get_text_metrics(&font, texts, &textMetrics) != 0)
+    {
+        delete[] font.filename;
+        PyErr_SetString(PyExc_RuntimeError, "TextMetrics error, failed to get the text metrics!\n");
+        return py::tuple();
+    }
+
+    fin_font(&font);
+    delete[] font.filename;
+    return convert_text_metrics(&textMetrics);
+}
+
+int text::init_font(TCAX_pFont pFont, char *fontFilename, int fontFaceID, int fontSize, int spacing,
+                    double spaceScale, uint32_t color, int bord, int is_outline)
+{
+    pFont->filename = fontFilename;
+    pFont->id = fontFaceID;
+    pFont->size = fontSize;
+    pFont->spacing = spacing;
+    pFont->spaceScale = spaceScale;
+    pFont->color = color;
+    pFont->bord = bord;
+    pFont->is_outline = is_outline;
+    if (FT_Init_FreeType(&pFont->library) != 0)
+    {
+        return -1;
+    }
+
+    if (FT_New_Face(pFont->library, pFont->filename, pFont->id, &pFont->face) != 0)
+    {
+        FT_Done_FreeType(pFont->library);
+        return -1;
+    }
+    /* FT_Select_Charmap(pFont->face, FT_ENCODING_UNICODE); */
+    if (!pFont->face->charmap)
+    {
+        FT_Done_Face(pFont->face);
+        FT_Done_FreeType(pFont->library);
+        return -1;
+    }
+
+    face_set_size(pFont->face, pFont->size);
+    return 0;
+}
+
+void text::fin_font(TCAX_pFont pFont)
+{
+    FT_Done_Face(pFont->face);
+    FT_Done_FreeType(pFont->library);
+}
+
+/* private */
+void text::face_set_size(FT_Face face, int size)
 {
     TT_HoriHeader *hori;
     TT_OS2 *os2;
@@ -57,46 +489,8 @@ static void _tcaxlib_face_set_size(FT_Face face, int size)
     mt->height = static_cast<FT_Pos>(mt->height / scale);
 }
 
-int tcaxlib_init_font(TCAX_pFont pFont, const char *fontFilename, int fontFaceID, int fontSize,
-                      int spacing, double spaceScale, uint32_t color, int bord, int is_outline)
+int text::get_text_pix(TCAX_pFont pFont, wchar_t text, TCAX_pPix pPix)
 {
-    pFont->filename = fontFilename;
-    pFont->id = fontFaceID;
-    pFont->size = fontSize;
-    pFont->spacing = spacing;
-    pFont->spaceScale = spaceScale;
-    pFont->color = color;
-    pFont->bord = bord;
-    pFont->is_outline = is_outline;
-    if (FT_Init_FreeType(&pFont->library) != 0)
-    {
-        return -1;
-    }
-
-    if (FT_New_Face(pFont->library, pFont->filename, pFont->id, &pFont->face) != 0)
-    {
-        FT_Done_FreeType(pFont->library);
-        return -1;
-    }
-    /* FT_Select_Charmap(pFont->face, FT_ENCODING_UNICODE); */
-    if (!pFont->face->charmap)
-    {
-        FT_Done_Face(pFont->face);
-        FT_Done_FreeType(pFont->library);
-        return -1;
-    }
-
-    _tcaxlib_face_set_size(pFont->face, pFont->size);
-    return 0;
-}
-
-void tcaxlib_fin_font(TCAX_pFont pFont)
-{
-    FT_Done_Face(pFont->face);
-    FT_Done_FreeType(pFont->library);
-}
-
-static int _tcaxlib_get_text_pix(const TCAX_pFont pFont, wchar_t text, TCAX_pPix pPix) {
     int i, l, m;
     FT_UInt index;
     index = FT_Get_Char_Index(pFont->face, text);
@@ -106,12 +500,12 @@ static int _tcaxlib_get_text_pix(const TCAX_pFont pFont, wchar_t text, TCAX_pPix
     }
     if (0 == pFont->bord) {
         ///FT_Load_Glyph(pFont->face, index, FT_LOAD_RENDER);
-            FT_Glyph glyph;
-            FT_BitmapGlyph bitmap_glyph;
-            FT_Load_Glyph(pFont->face, index, FT_LOAD_NO_BITMAP);
-            FT_Get_Glyph(pFont->face->glyph, &glyph);
-            FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, NULL, TRUE);
-            bitmap_glyph = (FT_BitmapGlyph)glyph;
+        FT_Glyph glyph;
+        FT_BitmapGlyph bitmap_glyph;
+        FT_Load_Glyph(pFont->face, index, FT_LOAD_NO_BITMAP);
+        FT_Get_Glyph(pFont->face->glyph, &glyph);
+        FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, NULL, TRUE);
+        bitmap_glyph = (FT_BitmapGlyph)glyph;
         pPix->initX = bitmap_glyph->left;    //pFont->face->glyph->metrics.horiBearingX / 64;
         pPix->initY = pFont->size + pFont->face->size->metrics.descender / 64 - bitmap_glyph->top;    ///pFont->size + ((pFont->face->size->metrics.descender - pFont->face->glyph->metrics.horiBearingY) / 64);
         pPix->width = bitmap_glyph->bitmap.width;    //pFont->face->glyph->bitmap.width;
@@ -228,7 +622,8 @@ static int _tcaxlib_get_text_pix(const TCAX_pFont pFont, wchar_t text, TCAX_pPix
     return 0;
 }
 
-static int _tcaxlib_get_texts_pix(const TCAX_pFont pFont, const wchar_t *text, TCAX_pPix pPix) {
+int text::get_texts_pix(TCAX_pFont pFont, const wchar_t *text, TCAX_pPix pPix)
+{
     int i, j, count, above, below, h, w, offset_x, offset_y, offset_dst, offset_src;
     int *pAdvanceHori;
     int *pBearingYHori;
@@ -240,9 +635,11 @@ static int _tcaxlib_get_texts_pix(const TCAX_pFont pFont, const wchar_t *text, T
     pBearingYHori = (int *)malloc(count * sizeof(int));
     pKerning = (int *)malloc(count * sizeof(int));
     pPixTemp = (TCAX_pPix)malloc(count * sizeof(TCAX_Pix));
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; ++i)
+    {
         index = FT_Get_Char_Index(pFont->face, text[i]);
-        if (0 == index) {
+        if (0 == index)
+        {
             free(pAdvanceHori);
             free(pBearingYHori);
             free(pKerning);
@@ -255,7 +652,8 @@ static int _tcaxlib_get_texts_pix(const TCAX_pFont pFont, const wchar_t *text, T
         pBearingYHori[i] = pFont->face->glyph->metrics.horiBearingY / 64;
         if (L' ' == text[i] || L'　' == text[i])
             pAdvanceHori[i] = (int)(pAdvanceHori[i] * pFont->spaceScale);
-        if (_tcaxlib_get_text_pix(pFont, text[i], &pPixTemp[i]) != 0) {
+        if (get_text_pix(pFont, text[i], &pPixTemp[i]) != 0)
+        {
             free(pAdvanceHori);
             free(pBearingYHori);
             free(pKerning);
@@ -265,16 +663,19 @@ static int _tcaxlib_get_texts_pix(const TCAX_pFont pFont, const wchar_t *text, T
             return -1;
         }
     }
-    if (FT_HAS_KERNING(pFont->face)) {
+    if (FT_HAS_KERNING(pFont->face))
+    {
         FT_UInt left;
         FT_UInt right;
         FT_Vector kerning;
-        for (i = 0; i < count - 1; i++) {
+        for (i = 0; i < count - 1; ++i)
+        {
             left  = FT_Get_Char_Index(pFont->face, text[i]);
             right = FT_Get_Char_Index(pFont->face, text[i + 1]);
             FT_Get_Kerning(pFont->face, left, right, FT_KERNING_DEFAULT, &kerning);
             pKerning[i] = kerning.x / 64;
         }
+
         pKerning[i] = 0;
     } else memset(pKerning, 0, count * sizeof(int));
     pPix->initX = pPixTemp[0].initX;
@@ -282,12 +683,13 @@ static int _tcaxlib_get_texts_pix(const TCAX_pFont pFont, const wchar_t *text, T
     for (i = 1; i < count; i++)
         pPix->initY = min(pPix->initY, pPixTemp[i].initY);
     pPix->width = -(int)pPixTemp[0].initX;
-    for (i = 0; i < count; i++)
+    for (i = 0; i < count; ++i)
         pPix->width += pAdvanceHori[i] + pKerning[i] + pFont->spacing;
     pPix->width += pPixTemp[count - 1].width + (int)pPixTemp[count - 1].initX - pAdvanceHori[count - 1] - pFont->spacing;
     above = pBearingYHori[0];
     below = pPixTemp[0].height - pBearingYHori[0];
-    for (i = 1; i < count; i++) {
+    for (i = 1; i < count; ++i)
+    {
         above = max(above, pBearingYHori[i]);
         below = max(below, pPixTemp[i].height - pBearingYHori[i]);
     }
@@ -296,10 +698,13 @@ static int _tcaxlib_get_texts_pix(const TCAX_pFont pFont, const wchar_t *text, T
     pPix->buf = (unsigned char *)malloc(pPix->size * sizeof(unsigned char));
     memset(pPix->buf, 0, pPix->size * sizeof(unsigned char));
     offset_x = -(int)pPixTemp[0].initX;
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; ++i)
+    {
         offset_y = above - pBearingYHori[i];
-        for (h = 0; h < pPixTemp[i].height; h++) {
-            for (w = 0; w < pPixTemp[i].width; w++) {
+        for (h = 0; h < pPixTemp[i].height; ++h)
+        {
+            for (w = 0; w < pPixTemp[i].width; ++w)
+            {
                 offset_dst = ((h + offset_y) * pPix->width + w + offset_x + (int)pPixTemp[i].initX) << 2;
                 offset_src = (h * pPixTemp[i].width + w) << 2;
                 if (0 != pPixTemp[i].buf[offset_src + 3])
@@ -316,243 +721,8 @@ static int _tcaxlib_get_texts_pix(const TCAX_pFont pFont, const wchar_t *text, T
     return 0;
 }
 
-//InitFont(font_file, face_id, font_size, spacing, space_scale, color, bord, is_outline)
-TCAX_PyFont tcaxlib_init_py_font(const char *font_file, int face_id, int font_size, int spacing,
-                                 double space_scale, uint32_t color, int bord, int is_outline)
-{
-    TCAX_pFont pFont;
-    pFont = (TCAX_pFont)malloc(sizeof(TCAX_Font));
-    if (tcaxlib_init_font(pFont, font_file, face_id, font_size, spacing,
-                          space_scale, color, bord, is_outline) != 0)
-    {
-        free(pFont);
-        PyErr_SetString(PyExc_RuntimeError, "TextPix error, failed to initialize the font!\n");
-        return py::tuple();
-    }
-
-    return py::make_tuple<TCAX_pFont>(pFont);
-}
-
-//FinFont(pyFont)
-TCAX_Py_Error_Code tcaxlib_fin_py_font(TCAX_PyFont &pyFont)
-{
-    TCAX_pFont pFont;
-
-    pFont = py::extract<TCAX_pFont>(pyFont[0]);
-    tcaxlib_fin_font(pFont);
-    free(pFont);
-    pyFont = py::tuple();   //reset to none
-    return py::long_(0);    /* 0 - means success */
-}
-
-//TextPix(pyFont, texts)
-TCAX_PyPix tcaxlib_get_pix_from_text(TCAX_PyFont &pyFont, const char *texts)
-{
-    TCAX_pFont pFont;
-    TCAX_Pix pix;
-    const wchar_t *text;
-
-    pFont = py::extract<TCAX_pFont>(pyFont[0]);
-    std::string src_string = std::string(texts);
-    std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
-    text = dst_string.c_str();
-    if (wcslen(text) <= 1)
-    {
-        if (_tcaxlib_get_text_pix(pFont, text[0], &pix) != 0)
-        {
-            PyErr_SetString(PyExc_RuntimeError, "TextPix error, failed to get the PIX!\n");
-            return py::tuple();
-        }
-    }
-    else
-    {
-        if (_tcaxlib_get_texts_pix(pFont, text, &pix) != 0)
-        {
-            PyErr_SetString(PyExc_RuntimeError, "TextPix error, failed to get the PIX!\n");
-            return py::tuple();
-        }
-    }
-
-    return tcaxlib_convert_pix(&pix, 1);
-}
-
-/* overload */
-//TextPix(font_file, face_id, font_size, spacing, space_scale, color, bord, is_outline, texts)
-TCAX_PyPix tcaxlib_get_pix_from_text_2(const char *font_file, int face_id, int font_size, int spacing, double space_scale,
-                                     uint32_t color, int bord, int is_outline, const char *texts)
-{
-    TCAX_Font font;
-    TCAX_Pix pix;
-    const wchar_t *text;
-    std::string src_string = std::string(texts);
-    std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
-    text = dst_string.c_str();
-
-    if (tcaxlib_init_font(&font, font_file, face_id, font_size, spacing, space_scale, color, bord, is_outline) != 0)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "TextPix error, failed to initialize the font!\n");
-        return py::tuple();
-    }
-    if (wcslen(text) <= 1)
-    {
-        if (_tcaxlib_get_text_pix(&font, text[0], &pix) != 0)
-        {
-            tcaxlib_fin_font(&font);
-            PyErr_SetString(PyExc_RuntimeError, "TextPix error, failed to get the PIX!\n");
-            return py::tuple();
-        }
-    }
-    else
-    {
-        if (_tcaxlib_get_texts_pix(&font, text, &pix) != 0)
-        {
-            tcaxlib_fin_font(&font);
-            PyErr_SetString(PyExc_RuntimeError, "TextPix error, failed to get the PIX!\n");
-            return py::tuple();
-        }
-    }
-
-    tcaxlib_fin_font(&font);
-    return tcaxlib_convert_pix(&pix, 1);
-}
-
-/* Bezier Curve Evaluation using De Casteljau's Algorithm */
-void linear_interpolation(double *pxt, double *pyt, double xa, double ya, double xb, double yb, double t)
-{
-    *pxt = xa + (xb - xa) * t;
-    *pyt = ya + (yb - ya) * t;
-}
-
-void conic_bezier(double *pxt, double *pyt, double xs, double ys, double xc, double yc, double xe, double ye, double t)
-{
-    double xsc, ysc, xce, yce;
-    linear_interpolation(&xsc, &ysc, xs, ys, xc, yc, t);
-    linear_interpolation(&xce, &yce, xc, yc, xe, ye, t);
-    linear_interpolation(pxt, pyt, xsc, ysc, xce, yce, t);
-}
-
-void cubic_bezier(double *pxt, double *pyt, double xs, double ys, double xc1, double yc1, double xc2,
-                  double yc2, double xe, double ye, double t)
-{
-    double x10, y10, x11, y11, x12, y12, x20, y20, x21, y21;    /* 00 = s, 01 = c1, 02 = c2, 03 = e */
-    linear_interpolation(&x10, &y10, xs, ys, xc1, yc1, t);
-    linear_interpolation(&x11, &y11, xc1, yc1, xc2, yc2, t);
-    linear_interpolation(&x12, &y12, xc2, yc2, xe, ye, t);
-    linear_interpolation(&x20, &y20, x10, y10, x11, y11, t);
-    linear_interpolation(&x21, &y21, x11, y11, x12, y12, t);
-    linear_interpolation(pxt, pyt, x20, y20, x21, y21, t);
-}
-
-static double _max_distance_3(double x1, double x2, double x3)
-{
-    double left, right;
-    left = x1;
-    if (left > x2)
-        left = x2;
-    if (left > x3)
-        left = x3;
-    right = x3;
-    if (right < x2)
-        right = x2;
-    if (right < x1)
-        right = x1;
-    return right - left;
-}
-
-static double _max_distance_4(double x1, double x2, double x3, double x4)
-{
-    double left, right;
-    left = x1;
-    if (left > x2)
-        left = x2;
-    if (left > x3)
-        left = x3;
-    if (left > x4)
-        left = x4;
-    right = x4;
-    if (right < x3)
-        right = x3;
-    if (right < x2)
-        right = x2;
-    if (right < x1)
-        right = x1;
-    return right - left;
-}
-
-static int _outline_points_move_to(const FT_Vector *to, void *user)
-{
-    TCAX_pOutlinePoints pOutline = (TCAX_pOutlinePoints)user;
-    tcaxlib_points_append(&pOutline->points, to->x / 64.0, pOutline->height - to->y / 64.0, 255);
-    pOutline->lastX = to->x / 64.0;
-    pOutline->lastY = to->y / 64.0;
-    return 0;
-}
-
-static int _outline_points_line_to(const FT_Vector *to, void *user)
-{
-    double xs, ys, xe, ye, x, y, t, step;
-    /* int i, points; */
-    TCAX_pOutlinePoints pOutline = (TCAX_pOutlinePoints)user;
-    xs = pOutline->lastX;
-    ys = pOutline->lastY;
-    xe = to->x / 64.0;
-    ye = to->y / 64.0;
-    step = 1 / (max(abs(xe - xs), abs(ye - ys)) * pOutline->density);
-    for (t = step; t < 1 + step; t += step) {
-        linear_interpolation(&x, &y, xs, ys, xe, ye, t);
-        tcaxlib_points_append(&pOutline->points, x, pOutline->height - y, 255);
-    }
-    pOutline->lastX = xe;
-    pOutline->lastY = ye;
-    return 0;
-}
-
-static int _outline_points_conic_to(const FT_Vector *control, const FT_Vector *to, void *user)
-{
-    double xs, ys, xc, yc, xe, ye, x, y, t, step;
-    /* int i, points; */
-    TCAX_pOutlinePoints pOutline = (TCAX_pOutlinePoints)user;
-    xs = pOutline->lastX;
-    ys = pOutline->lastY;
-    xc = control->x / 64.0;
-    yc = control->y / 64.0;
-    xe = to->x / 64.0;
-    ye = to->y / 64.0;
-    step = 1 / (max(_max_distance_3(xs, xc, xe), _max_distance_3(ys, yc, ye)) * pOutline->density);
-    for (t = step; t < 1 + step; t += step) {
-        conic_bezier(&x, &y, xs, ys, xc, yc, xe, ye, t);
-        tcaxlib_points_append(&pOutline->points, x, pOutline->height - y, 255);
-    }
-
-    pOutline->lastX = xe;
-    pOutline->lastY = ye;
-    return 0;
-}
-
-static int _outline_points_cubic_to(const FT_Vector *control1, const FT_Vector *control2, const FT_Vector *to, void *user)
-{
-    double xs, ys, xc1, yc1, xc2, yc2, xe, ye, x, y, t, step;
-    TCAX_pOutlinePoints pOutline = (TCAX_pOutlinePoints)user;
-    xs = pOutline->lastX;
-    ys = pOutline->lastY;
-    xc1 = control1->x / 64.0;
-    yc1 = control1->y / 64.0;
-    xc2 = control2->x / 64.0;
-    yc2 = control2->y / 64.0;
-    xe = to->x / 64.0;
-    ye = to->y / 64.0;
-    step = 1 / (max(_max_distance_4(xs, xc1, xc2, xe), _max_distance_4(ys, yc1, yc2, ye)) * pOutline->density);
-    for (t = step; t < 1 + step; t += step) {
-        cubic_bezier(&x, &y, xs, ys, xc1, yc1, xc2, yc2, xe, ye, t);
-        tcaxlib_points_append(&pOutline->points, x, pOutline->height - y, 255);
-    }
-    pOutline->lastX = xe;
-    pOutline->lastY = ye;
-    return 0;
-}
-
-static int _tcaxlib_get_text_outline_points(const TCAX_pFont pFont, wchar_t text, double density, double **pXBuf,
-                                            double **pYBuf, unsigned char **pABuf, int *pCount)
+int text::get_text_outline_points(const TCAX_pFont pFont, wchar_t text, double density, double **pXBuf,
+                                  double **pYBuf, unsigned char **pABuf, int *pCount)
 {
     FT_UInt index;
     FT_Glyph glyph;
@@ -598,83 +768,7 @@ static int _tcaxlib_get_text_outline_points(const TCAX_pFont pFont, wchar_t text
     return 0;
 }
 
-//TextOutlinePoints(pyFont, text, density)
-TCAX_PyPoints tcaxlib_get_text_outline_as_points(TCAX_PyFont &pyFont, const char *text, double density)
-{
-    TCAX_pFont pFont;
-    const wchar_t *texts;
-    double *xBuf, *yBuf;
-    unsigned char *aBuf;
-    int i, count;
-    py::list pyPoints;
-    py::tuple pyPointTemp;
-
-    pFont = py::extract<TCAX_pFont>(pyFont[0]);
-    std::string src_string = std::string(text);
-    std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
-    texts = dst_string.c_str();
-
-    if (_tcaxlib_get_text_outline_points(pFont, texts[0], density, &xBuf, &yBuf, &aBuf, &count) != 0)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "TextOutlinePoints error, failed to get the outline!\n");
-        return pyFont;
-    }
-
-    for (i = 0; i < count; ++i)
-    {
-        pyPointTemp = py::make_tuple(xBuf[i], yBuf[i], aBuf[i]);
-        pyPoints.append(pyPointTemp);
-    }
-
-    delete xBuf;
-    delete yBuf;
-    delete aBuf;
-    return py::tuple(pyPoints);
-}
-
-//TextOutlinePoints(font_file, face_id, font_size, text, density)
-TCAX_PyPoints tcaxlib_get_text_outline_as_points_2(const char *font_file, int face_id, int font_size,
-                                                   const char *text, double density)
-{
-    const wchar_t *texts;
-    TCAX_Font font;
-    double *xBuf, *yBuf;
-    unsigned char *aBuf;
-    int i, count;
-    py::list pyPoints;
-    py::tuple pyPointTemp;
-
-    std::string src_string = std::string(text);
-    std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
-    texts = dst_string.c_str();
-
-    if (tcaxlib_init_font(&font, font_file, face_id, font_size, 0, 0, 0, 0, 0) != 0)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "TextOutlinePoints error, failed to initialize the font!\n");
-        return py::tuple();
-    }
-
-    if (_tcaxlib_get_text_outline_points(&font, texts[0], density, &xBuf, &yBuf, &aBuf, &count) != 0) {
-        tcaxlib_fin_font(&font);
-        PyErr_SetString(PyExc_RuntimeError, "TextOutlinePoints error, failed to get the outline!\n");
-        return py::tuple();
-    }
-
-    tcaxlib_fin_font(&font);
-
-    for (i = 0; i < count; i++)
-    {
-        pyPointTemp = py::make_tuple(xBuf[i], yBuf[i], aBuf[i]);
-        pyPoints.append(pyPointTemp);
-    }
-
-    delete xBuf;
-    delete yBuf;
-    delete aBuf;
-    return py::tuple(pyPoints);
-}
-
-static int _tcaxlib_get_text_metrics(const TCAX_pFont pFont, const wchar_t *text, TCAX_pTextMetrics pTextMetrics)
+int text::_tcax_lib_get_text_metrics(const TCAX_pFont pFont, const wchar_t *text, TCAX_pTextMetrics pTextMetrics)
 {
     int i, count, height;
     FT_UInt index;
@@ -697,9 +791,11 @@ static int _tcaxlib_get_text_metrics(const TCAX_pFont pFont, const wchar_t *text
     pVertBearingY = (int *)malloc(count * sizeof(int));
     pVertAdvance = (int *)malloc(count * sizeof(int));
     pKerning = (int *)malloc(count * sizeof(int));
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; i++)
+    {
         index = FT_Get_Char_Index(pFont->face, text[i]);
-        if (0 == index) {
+        if (0 == index)
+        {
             free(pWidth);
             free(pHeight);
             free(pHoriBearingX);
@@ -722,11 +818,13 @@ static int _tcaxlib_get_text_metrics(const TCAX_pFont pFont, const wchar_t *text
         pVertBearingY[i] = pFont->face->glyph->metrics.vertBearingY / 64;
         pVertAdvance[i] = pFont->face->glyph->metrics.vertAdvance >> 6;
     }
-    if (FT_HAS_KERNING(pFont->face)) {
+    if (FT_HAS_KERNING(pFont->face))
+    {
         FT_UInt left;
         FT_UInt right;
         FT_Vector kerning;
-        for (i = 0; i < count - 1; i++) {
+        for (i = 0; i < count - 1; i++)
+        {
             left  = FT_Get_Char_Index(pFont->face, text[i]);
             right = FT_Get_Char_Index(pFont->face, text[i + 1]);
             FT_Get_Kerning(pFont->face, left, right, FT_KERNING_DEFAULT, &kerning);
@@ -742,7 +840,8 @@ static int _tcaxlib_get_text_metrics(const TCAX_pFont pFont, const wchar_t *text
     pTextMetrics->vertAdvance = 0;
     pTextMetrics->vertBearingX = pVertBearingX[0];
     pTextMetrics->vertBearingY = pVertBearingY[0];
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; i++)
+    {
         pTextMetrics->horiAdvance += pHoriAdvance[i] + pKerning[i] + pFont->spacing;
         height = max(height, pHeight[i] - pHoriBearingY[i]);
         pTextMetrics->horiBearingY = TCAXLIB_TEXT_MAX(pTextMetrics->horiBearingY, pHoriBearingY[i]);
@@ -773,7 +872,7 @@ static int _tcaxlib_get_text_metrics(const TCAX_pFont pFont, const wchar_t *text
     return 0;
 }
 
-static TCAX_PyTextMetrics _tcaxlib_convert_text_metrics(const TCAX_pTextMetrics pTextMetrics)
+TCAX_PyTextMetrics text::convert_text_metrics(const TCAX_pTextMetrics pTextMetrics)
 {
     py::list pyTextMetrics;
     pyTextMetrics.append(pTextMetrics->width);
@@ -794,53 +893,4 @@ static TCAX_PyTextMetrics _tcaxlib_convert_text_metrics(const TCAX_pTextMetrics 
     pyTextMetrics.append(pTextMetrics->max_advance);
 
     return py::tuple(pyTextMetrics);
-}
-
-//TextMetrics(pyFont, text)
-TCAX_PyTextMetrics tcaxlib_get_text_metrics(TCAX_PyFont &pyFont, const char *text)
-{
-    //PyObject *pyArg1, *pyArg2;
-    TCAX_pFont pFont;
-    TCAX_TextMetrics textMetrics;
-    const wchar_t *texts;
-
-    pFont = py::extract<TCAX_pFont>(pyFont[0]);
-    std::string src_string = std::string(text);
-    std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
-    texts = dst_string.c_str();
-
-    if (_tcaxlib_get_text_metrics(pFont, texts, &textMetrics) != 0)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "TextMetrics error, failed to get the text metrics!\n");
-        return pyFont;
-    }
-
-    return _tcaxlib_convert_text_metrics(&textMetrics);
-}
-
-//TextMetrics(font_file, face_id, font_size, spacing, space_scale, text)
-TCAX_PyTextMetrics tcaxlib_get_text_metrics_2(const char *font_file, int face_id, int font_size, int spacing,
-                                              double space_scale, const char *text)
-{
-    const wchar_t *texts;
-    TCAX_Font font;
-    TCAX_TextMetrics textMetrics;
-
-    std::string src_string = std::string(text);
-    std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
-    texts = dst_string.c_str();
-
-    if (tcaxlib_init_font(&font, font_file, face_id, font_size, spacing, space_scale, 0, 0, 0) != 0)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "TextMetrics error, failed to initialize the font!\n");
-        return py::tuple();
-    }
-    if (_tcaxlib_get_text_metrics(&font, texts, &textMetrics) != 0)
-    {
-        PyErr_SetString(PyExc_RuntimeError, "TextMetrics error, failed to get the text metrics!\n");
-        return py::tuple();
-    }
-
-    tcaxlib_fin_font(&font);
-    return _tcaxlib_convert_text_metrics(&textMetrics);
 }

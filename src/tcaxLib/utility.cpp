@@ -24,6 +24,11 @@
 
 using namespace std;
 
+namespace util
+{
+    typedef text TEXT;
+};
+
 /**
  * pString->buf need to be allocated before being passed to the function, and it will be reallocated if more space is needed
  * pString->len and pString->capacity should also be specified before being passed to the function, and their value may be modified
@@ -127,53 +132,8 @@ static int _outline_drawing_cubic_to(const FT_Vector *control1, const FT_Vector 
     return 0;
 }
 
-static int _tcaxlib_get_text_outline_drawing_string(const TCAX_pFont pFont, wchar_t text, int x, int y,
-                                                    wchar_t **pDrawing, int *pLen)
-{
-    FT_UInt index;
-    FT_Glyph glyph;
-    FT_OutlineGlyph outline;
-    FT_Outline_Funcs outInterface;
-    TCAX_OutlineString outlineString;
-    /* get parameters from script */
-    index = FT_Get_Char_Index(pFont->face, text);
-    if (0 == index)
-    {
-        printf("TextOutlineDraw Error: find an invalid text that does not exists in the font.\n");
-        return -1;
-    }
-    FT_Load_Glyph(pFont->face, index, FT_LOAD_DEFAULT);
-    FT_Get_Glyph(pFont->face->glyph, &glyph);
-    if (FT_GLYPH_FORMAT_OUTLINE != glyph->format)
-    {
-        printf("TextOutlineDraw Error: cannot get the outline of the text.\n");
-        return -1;
-    }
-    outline = (FT_OutlineGlyph)glyph;
-    outlineString.offset.x = x * 64;
-    outlineString.offset.y = y * 64;
-    outlineString.height = (pFont->size << 6) + pFont->face->size->metrics.descender;
-    outlineString.last.x = 0;
-    outlineString.last.y = 0;
-    outlineString.string.len = 0;
-    outlineString.string.capacity = 10;
-    outlineString.string.buf = (wchar_t *)malloc(outlineString.string.capacity * sizeof(wchar_t));
-    outInterface.move_to = (FT_Outline_MoveToFunc)_outline_drawing_move_to;
-    outInterface.line_to = (FT_Outline_LineToFunc)_outline_drawing_line_to;
-    outInterface.conic_to = (FT_Outline_ConicToFunc)_outline_drawing_conic_to;
-    outInterface.cubic_to = (FT_Outline_CubicToFunc)_outline_drawing_cubic_to;
-    outInterface.shift = 0;
-    outInterface.delta = 0;
-    FT_Outline_Decompose(&outline->outline, &outInterface, &outlineString);
-    _tcaxlib_string_append(&outlineString.string, L"c", 1);
-    FT_Done_Glyph(glyph);
-    *pDrawing = outlineString.string.buf;
-    *pLen = outlineString.string.len;
-    return 0;
-}
-
 //TextOutlineDraw(pyFont, text, x, y)
-TCAX_PyString tcaxlib_get_text_outline_as_string(TCAX_PyFont &pyFont, const char *text, int x, int y)
+TCAX_PyString utility::get_text_outline_as_string(text &pyFont, const char *text, int x, int y)
 {
     TCAX_pFont pFont;
     const wchar_t *texts;
@@ -181,12 +141,12 @@ TCAX_PyString tcaxlib_get_text_outline_as_string(TCAX_PyFont &pyFont, const char
     int len;
     TCAX_PyString pyDrawing;
 
-    pFont = py::extract<TCAX_pFont>(pyFont[0]);
+    pFont = pyFont.get_pFont();
     std::string src_string = std::string(text);
     std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
     texts = dst_string.c_str();
 
-    if (_tcaxlib_get_text_outline_drawing_string(pFont, texts[0], x, y, &drawing, &len) != 0)
+    if (get_text_outline_drawing_string(pFont, texts[0], x, y, &drawing, &len) != 0)
     {
         PyErr_SetString(PyExc_RuntimeError, "TextOutlineDraw error, failed to get the outline!\n");
         return py::str();
@@ -202,10 +162,9 @@ TCAX_PyString tcaxlib_get_text_outline_as_string(TCAX_PyFont &pyFont, const char
 }
 
 //TextOutlineDraw(font_file, face_id, font_size, text, x, y)
-TCAX_PyString tcaxlib_get_text_outline_as_string_2(const char *font_file, int face_id, int font_size,
-                                                   const char *text, int x, int y)
+TCAX_PyString utility::get_text_outline_as_string_2(const char *font_file, int face_id, int font_size,
+                                                    const char *text, int x, int y)
 {
-    //PyObject *pyArg1, *pyArg2, *pyArg3, *pyArg4, *pyArg5, *pyArg6;
     const wchar_t *texts;
     TCAX_Font font;
     wchar_t *drawing;
@@ -215,14 +174,23 @@ TCAX_PyString tcaxlib_get_text_outline_as_string_2(const char *font_file, int fa
     std::string src_string = std::string(text);
     std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
     texts = dst_string.c_str();
-    if (tcaxlib_init_font(&font, font_file, face_id, font_size, 0, 0, 0, 0, 0) != 0) {
+
+    char *tmp_str = new char[strlen(font_file) + 1]();
+    memcpy(tmp_str, font_file, strlen(font_file));
+    tmp_str[strlen(font_file)] = '\0';
+    util::TEXT Text;
+
+    if (Text.init_font(&font, tmp_str, face_id, font_size, 0, 0, 0, 0, 0) != 0)
+    {
+        delete[] font.filename;
         PyErr_SetString(PyExc_RuntimeError, "TextOutlineDraw error, failed to initialize the font!\n");
         return py::str();
     }
 
-    if (_tcaxlib_get_text_outline_drawing_string(&font, texts[0], x, y, &drawing, &len) != 0)
+    if (get_text_outline_drawing_string(&font, texts[0], x, y, &drawing, &len) != 0)
     {
-        tcaxlib_fin_font(&font);
+        Text.fin_font(&font);
+        delete[] font.filename;
         PyErr_SetString(PyExc_RuntimeError, "TextOutlineDraw error, failed to get the outline!\n");
         return py::str();
     }
@@ -232,36 +200,26 @@ TCAX_PyString tcaxlib_get_text_outline_as_string_2(const char *font_file, int fa
     std::string drawing_dst = boost::locale::conv::utf_to_utf<char>(drawing_src);
     pyDrawing = py::str(drawing_dst.c_str());
 
-    tcaxlib_fin_font(&font);
+    Text.fin_font(&font);
+    delete[] font.filename;
     delete[] drawing;
     return pyDrawing;
 }
 
-static int _tcaxlib_is_text_c_or_j_or_k(const wchar_t *text)
-{
-    int i, count;
-    count = wcslen(text);
-    for (i = 0; i < count; i++)
-    {
-        if (text[0] >= 0x3000 && text[1] <= 0x9FFF) return 1;
-    }
-    return 0;
-}
-
 //IsCjk(text)
-TCAX_Py_Error_Code tcaxlib_is_c_or_j_or_k(const char *text)
+bool utility::is_c_or_j_or_k(const char *text)
 {
     const wchar_t *texts;
 
     std::string src_string = std::string(text);
     std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
     texts = dst_string.c_str();
-    if (_tcaxlib_is_text_c_or_j_or_k(texts)) return py::long_(1);
-    else return py::long_(0);
+    if (is_text_c_or_j_or_k(texts)) return true;
+    else return false;
 }
 
 //VertLayout(text)
-TCAX_PyString tcaxlib_vertical_layout_ass(const char *text)
+TCAX_PyString utility::vertical_layout_ass(const char *text)
 {
     int count, len;
     const wchar_t *texts;
@@ -272,7 +230,7 @@ TCAX_PyString tcaxlib_vertical_layout_ass(const char *text)
     std::wstring dst_string = boost::locale::conv::utf_to_utf<wchar_t>(src_string);
     texts = dst_string.c_str();
     count = wcslen(texts);
-    if (_tcaxlib_is_text_c_or_j_or_k(texts))
+    if (is_text_c_or_j_or_k(texts))
     {    /* Chinese or Japanese or Korea characters needn't be rotated */
         int i, offset;
         len = 1 + (count - 1) * 3;    /* T\\NT\\NT\0 */
@@ -307,17 +265,17 @@ TCAX_PyString tcaxlib_vertical_layout_ass(const char *text)
 }
 
 //ShowProgress(total, completed, file_id, file_num)
-TCAX_Py_Error_Code tcaxlib_show_progress(int total, int completed, int file_id, int file_num)
+bool utility::show_progress(int total, int completed, int file_id, int file_num)
 {
     printf("Progress: %.2f%c\r", 100 * (file_id + completed / (double)total) / file_num, '%');
     fflush(stdout);
-    return py::long_(0);
+    return true;
 }
 
 //Bezier1(nPoints, xs, ys, xe, ye)
-TCAX_PyPoints tcaxlib_bezier_curve_linear(int points,
-                                          double xs, double ys,
-                                          double xe, double ye)
+TCAX_PyPoints utility::bezier_curve_linear(int points,
+                                           double xs, double ys,
+                                           double xe, double ye)
 {   /* the return value has a pattern of ((x1, y1, a1), (x2, y2, a2), ...) */
     int i;
     double x, y, t;
@@ -337,10 +295,10 @@ TCAX_PyPoints tcaxlib_bezier_curve_linear(int points,
 }
 
 //Bezier2(nPoints, xs, ys, xe, ye, xc, yc)
-TCAX_PyPoints tcaxlib_bezier_curve_quadratic(int points,
-                                             double xs, double ys,
-                                             double xe, double ye,
-                                             double xc, double yc)
+TCAX_PyPoints utility::bezier_curve_quadratic(int points,
+                                              double xs, double ys,
+                                              double xe, double ye,
+                                              double xc, double yc)
 {   /* the return value has a pattern of ((x1, y1, a1), (x2, y2, a2), ...) */
     int i;
     double x, y, t;
@@ -361,11 +319,11 @@ TCAX_PyPoints tcaxlib_bezier_curve_quadratic(int points,
 }
 
 //Bezier3(nPoints, xs, ys, xe, ye, xc1, yc1, xc2, yc2)
-TCAX_PyPoints tcaxlib_bezier_curve_cubic(int points,
-                                         double xs, double ys,
-                                         double xe, double ye,
-                                         double xc1, double yc1,
-                                         double xc2, double yc2)
+TCAX_PyPoints utility::bezier_curve_cubic(int points,
+                                          double xs, double ys,
+                                          double xe, double ye,
+                                          double xc1, double yc1,
+                                          double xc2, double yc2)
 {   /* the return value has a pattern of ((x1, y1, a1), (x2, y2, a2), ...) */
     int i;
     double x, y, t;
@@ -384,32 +342,13 @@ TCAX_PyPoints tcaxlib_bezier_curve_cubic(int points,
     return py::tuple(pyPoints);
 }
 
-long _Fac(int n) {
-    int i;
-    long N = 1;
-    for (i = 2; i <= n; i++)
-        N *= i;
-    return N;
-}
-
-long _Combi(int n, int m)
-{
-    return _Fac(n) / (_Fac(n - m) * _Fac(m));
-}
-
-int _Randint(int r1, int r2)
-{
-    if (r1 > r2) return r2 + rand() % (r1 - r2 + 1);
-    return r1 + rand() % (r2 - r1 + 1);
-}
-
 //BezierN(nPoints, xs, ys, xe, ye, xl1, yl1, xl2, yl2, order)
-TCAX_PyPoints tcaxlib_bezier_curve_random(int points,
-                                          double xs, double ys,
-                                          double xe, double ye,
-                                          double xl1, double yl1,
-                                          double xl2, double yl2,
-                                          int order)
+TCAX_PyPoints utility::bezier_curve_random(int points,
+                                           double xs, double ys,
+                                           double xe, double ye,
+                                           double xl1, double yl1,
+                                           double xl2, double yl2,
+                                           int order)
 {   /* the return value has a pattern of ((x1, y1, a1), (x2, y2, a2), ...) */
     int i, j;
     double x, y, t;
@@ -455,7 +394,7 @@ TCAX_PyPoints tcaxlib_bezier_curve_random(int points,
 }
 
 //GetFontSize(font_file, face_id, font_size)
-TCAX_PyFloat tcaxlib_get_actual_font_size(const char *font_file, int face_id, int font_size)
+float utility::get_actual_font_size(const char *font_file, int face_id, int font_size)
 {
     FT_Library library;
     FT_Face face;
@@ -466,13 +405,13 @@ TCAX_PyFloat tcaxlib_get_actual_font_size(const char *font_file, int face_id, in
     if (FT_Init_FreeType(&library) != 0)
     {
         PyErr_SetString(PyExc_RuntimeError, "GetFontSize error, failed to initialize the font.\n");
-        return py::tuple();
+        return 0;
     }
     if (FT_New_Face(library, font_file, face_id, &face) != 0)
     {
         FT_Done_FreeType(library);
         PyErr_SetString(PyExc_RuntimeError, "GetFontSize error, failed to initialize the font.\n");
-        return py::tuple();
+        return 0;
     }
 
     hori = (TT_HoriHeader *)FT_Get_Sfnt_Table(face, ft_sfnt_hhea);
@@ -490,11 +429,11 @@ TCAX_PyFloat tcaxlib_get_actual_font_size(const char *font_file, int face_id, in
     }
     FT_Done_Face(face);
     FT_Done_FreeType(library);
-    return py::make_tuple(font_size * scale);
+    return (font_size * scale);
 }
 
 //CairoFontSize(font_file, face_id, font_size)
-TCAX_PyLong tcaxlib_calc_cairo_font_size(const char *font_file, int face_id, int font_size)
+int utility::calc_cairo_font_size(const char *font_file, int face_id, int font_size)
 {
     FT_Library library;
     FT_Face face;
@@ -507,13 +446,13 @@ TCAX_PyLong tcaxlib_calc_cairo_font_size(const char *font_file, int face_id, int
     if (FT_Init_FreeType(&library) != 0)
     {
         PyErr_SetString(PyExc_RuntimeError, "CairoFontSize error, failed to initialize the font.\n");
-        return py::long_();
+        return 0;
     }
     if (FT_New_Face(library, font_file, face_id, &face) != 0)
     {
         FT_Done_FreeType(library);
         PyErr_SetString(PyExc_RuntimeError, "CairoFontSize error, failed to initialize the font.\n");
-        return py::long_();
+        return 0;
     }
 
     hori = (TT_HoriHeader *)FT_Get_Sfnt_Table(face, ft_sfnt_hhea);
@@ -538,5 +477,82 @@ TCAX_PyLong tcaxlib_calc_cairo_font_size(const char *font_file, int face_id, int
     fontSize2 = (int)(font_size * scale * face->units_per_EM / (double)(face->ascender - face->descender) + 0.5);
     FT_Done_Face(face);
     FT_Done_FreeType(library);
-    return py::long_(fontSize2);
+    return fontSize2;
+}
+
+/* private */
+int utility::get_text_outline_drawing_string(const TCAX_pFont pFont, wchar_t text, int x, int y,
+                                             wchar_t **pDrawing, int *pLen)
+{
+    FT_UInt index;
+    FT_Glyph glyph;
+    FT_OutlineGlyph outline;
+    FT_Outline_Funcs outInterface;
+    TCAX_OutlineString outlineString;
+    /* get parameters from script */
+    index = FT_Get_Char_Index(pFont->face, text);
+    if (0 == index)
+    {
+        printf("TextOutlineDraw Error: find an invalid text that does not exists in the font.\n");
+        return -1;
+    }
+    FT_Load_Glyph(pFont->face, index, FT_LOAD_DEFAULT);
+    FT_Get_Glyph(pFont->face->glyph, &glyph);
+    if (FT_GLYPH_FORMAT_OUTLINE != glyph->format)
+    {
+        printf("TextOutlineDraw Error: cannot get the outline of the text.\n");
+        return -1;
+    }
+    outline = (FT_OutlineGlyph)glyph;
+    outlineString.offset.x = x * 64;
+    outlineString.offset.y = y * 64;
+    outlineString.height = (pFont->size << 6) + pFont->face->size->metrics.descender;
+    outlineString.last.x = 0;
+    outlineString.last.y = 0;
+    outlineString.string.len = 0;
+    outlineString.string.capacity = 10;
+    outlineString.string.buf = (wchar_t *)malloc(outlineString.string.capacity * sizeof(wchar_t));
+    outInterface.move_to = (FT_Outline_MoveToFunc)_outline_drawing_move_to;
+    outInterface.line_to = (FT_Outline_LineToFunc)_outline_drawing_line_to;
+    outInterface.conic_to = (FT_Outline_ConicToFunc)_outline_drawing_conic_to;
+    outInterface.cubic_to = (FT_Outline_CubicToFunc)_outline_drawing_cubic_to;
+    outInterface.shift = 0;
+    outInterface.delta = 0;
+    FT_Outline_Decompose(&outline->outline, &outInterface, &outlineString);
+    _tcaxlib_string_append(&outlineString.string, L"c", 1);
+    FT_Done_Glyph(glyph);
+    *pDrawing = outlineString.string.buf;
+    *pLen = outlineString.string.len;
+    return 0;
+}
+
+int utility::is_text_c_or_j_or_k(const wchar_t *text)
+{
+    int i, count;
+    count = wcslen(text);
+    for (i = 0; i < count; i++)
+    {
+        if (text[0] >= 0x3000 && text[1] <= 0x9FFF) return 1;
+    }
+    return 0;
+}
+
+long utility::_Fac(int n)
+{
+    int i;
+    long N = 1;
+    for (i = 2; i <= n; i++)
+        N *= i;
+    return N;
+}
+
+long utility::_Combi(int n, int m)
+{
+    return _Fac(n) / (_Fac(n - m) * _Fac(m));
+}
+
+int utility::_Randint(int r1, int r2)
+{
+    if (r1 > r2) return r2 + rand() % (r1 - r2 + 1);
+    return r1 + rand() % (r2 - r1 + 1);
 }

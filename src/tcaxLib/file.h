@@ -33,12 +33,7 @@ typedef struct _tcax_ass_file {
     FILE *fp;
 } TCAX_AssFile, *TCAX_pAssFile;
 
-/**
- * TCAX_PyAssFile structure that has the following form (TCAX_pAssFile)
- */
-typedef py::tuple TCAX_PyAssFile;
-
-class file
+class file : public common
 {
 public:
 
@@ -64,8 +59,6 @@ public:
 
     void reset(const char *ass_file, const char *ass_header = nullptr);
 
-    bool is_success() const;
-
     bool is_append() const;
 
 protected:
@@ -77,8 +70,6 @@ protected:
 private:
 
     TCAX_pAssFile pAssFile;
-
-    bool success;
 
     bool append;
 

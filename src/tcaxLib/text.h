@@ -37,7 +37,6 @@ extern "C"
 #include "freetype2/freetype/fttypes.h"
 };
 
-
 #ifdef _WIN32
 #pragma comment(lib, "../FreeType/freetype.lib")
 #endif
@@ -52,7 +51,7 @@ extern "C"
  * TCAX_Font structure
  */
 typedef struct _tcax_font {
-    const char *filename;   /**< font file name */
+    char *filename;         /**< font file name */
     FT_Library library;     /**< FT library */
     FT_Face face;           /**< FT face */
     int id;                 /**< font face id */
@@ -100,110 +99,157 @@ typedef struct _tcax_text_metrics {
 } TCAX_TextMetrics, *TCAX_pTextMetrics;
 
 /**
- * TCAX_PyFont structure is only a python integer object to hold the value of pFont whose real content are kept in the 
- * memory, not passing to the python client, hence cannot be directly accessed from python scripts, but through tcaxLib APIs.
- */
-typedef py::tuple TCAX_PyFont;
-
-/**
  * TCAX_PyTextMetrics structure that has the following structure
  * (width, height, horiBearingX, horiBearingY, horiAdvance, vertBearingX, vertBearingY, vertAdvance, x_ppem, y_ppem, x_scale, y_scale, ascender, descender, px_height, max_advance)
  */
 typedef py::tuple TCAX_PyTextMetrics;
 
-/**
- * Initialize TCAX_Font structure
- */
-extern int tcaxlib_init_font(TCAX_pFont pFont, const char *fontFilename, int fontFaceID,
-                             int fontSize, int spacing, double spaceScale, uint32_t color,
-                             int bord, int is_outline);
-
-/**
- * Finalize TCAX_Font structure
- */
-extern void tcaxlib_fin_font(TCAX_pFont pFont);
-
-/**
- * Initialize TCAX_Font structure, keep the content in memory, then pass its pointer as TCAX_PyFont. 
- * Remark: the real content of TCAX_PyFont is kept in memory, and only can be accessed through tcaxLib APIs, 
- * the memory will be freed by FinFont function.
- *
- * @param font_file
- * @param face_id
- * @param font_size
- * @param spacing
- * @param space_scale
- * @param color
- * @param bord
- * @param is_outline
- * @return TCAX_PyFont
- */
-//InitFont(font_file, face_id, font_size, spacing, space_scale, color, bord, is_outline)
-extern TCAX_PyFont tcaxlib_init_py_font(const char *font_file, int face_id, int font_size, int spacing,
-                                        double space_scale, uint32_t color, int bord, int is_outline);
-
-/**
- * Finalize TCAX_Font structure free all the memory occupied by it.
- * @param pyFont
- * @return TCAX_Py_Error_Code
- */
-//FinFont(pyFont)
-extern TCAX_Py_Error_Code tcaxlib_fin_py_font(TCAX_PyFont &pyFont);
-
-/**
- * Make TCAX PIX from text(s).
- * @param pyFont
- * @param texts
- * @return TCAX_PyPix
- */
-//TextPix(pyFont, texts)
-extern TCAX_PyPix tcaxlib_get_pix_from_text(TCAX_PyFont &pyFont, const char *texts);
-
-/* overload */
-//TextPix(font_file, face_id, font_size, spacing, space_scale, color, bord, is_outline, texts)
-extern TCAX_PyPix tcaxlib_get_pix_from_text_2(const char *font_file, int face_id, int font_size, int spacing, double space_scale,
-                                            uint32_t color, int bord, int is_outline, const char *texts);
-
 /* Bezier Curve Evaluation using De Casteljau's Algorithm */
-extern void linear_interpolation(double *pxt, double *pyt, double xa, double ya, double xb, double yb, double t);
-extern void conic_bezier(double *pxt, double *pyt, double xs, double ys, double xc, double yc, double xe, double ye, double t);
-extern void cubic_bezier(double *pxt, double *pyt, double xs, double ys, double xc1, double yc1, double xc2, double yc2, double xe, double ye, double t);
+void linear_interpolation(double *pxt, double *pyt,
+                          double xa, double ya,
+                          double xb, double yb,
+                          double t);
 
-/**
- * Get text outline points.
- * @param pyFont
- * @param text
- * @param density
- * @return TCAX_PyPoints
- */
-//TextOutlinePoints(pyFont, text, density)
-extern TCAX_PyPoints tcaxlib_get_text_outline_as_points(TCAX_PyFont &pyFont, const char *text, double density);
+void conic_bezier(double *pxt, double *pyt,
+                  double xs, double ys,
+                  double xc, double yc,
+                  double xe, double ye,
+                  double t);
 
-/**
- * Get text outline points.
- * @param font_file
- * @param face_id
- * @param font_size
- * @param text
- * @param density
- * @return TCAX_PyPoints
- */
-/* overload */
-//TextOutlinePoints(font_file, face_id, font_size, text, density)
-extern TCAX_PyPoints tcaxlib_get_text_outline_as_points_2(const char *font_file, int face_id, int font_size,
-                                                          const char *text, double density);
+void cubic_bezier(double *pxt, double *pyt,
+                  double xs, double ys,
+                  double xc1, double yc1,
+                  double xc2, double yc2,
+                  double xe, double ye,
+                  double t);
 
-/**
- * Get text(s) metrics.
- * @param self reserved
- * @param args (pyFont, texts) or (font_file, face_id, font_size, spacing, space_scale, text)
- * @return TCAX_PyTextMetrics
- */
-//TextMetrics(pyFont, text)
-extern TCAX_PyTextMetrics tcaxlib_get_text_metrics(TCAX_PyFont &pyFont, const char *text);
+double _max_distance_3(double x1, double x2, double x3);
 
-//TextMetrics(font_file, face_id, font_size, spacing, space_scale, text)
-extern TCAX_PyTextMetrics tcaxlib_get_text_metrics_2(const char *font_file, int face_id, int font_size, int spacing,
-                                                     double space_scale, const char *text);
+double _max_distance_4(double x1, double x2, double x3, double x4);
+
+int _outline_points_move_to(const FT_Vector *to, void *user);
+
+int _outline_points_line_to(const FT_Vector *to, void *user);
+
+int _outline_points_conic_to(const FT_Vector *control, const FT_Vector *to, void *user);
+
+int _outline_points_cubic_to(const FT_Vector *control1, const FT_Vector *control2, const FT_Vector *to, void *user);
+
+class text : public common
+{
+public:
+
+    /**
+     * Initialize TCAX_Font structure, keep the content in memory, then pass its pointer as TCAX_PyFont.
+     * Remark: the real content of TCAX_PyFont is kept in memory, and only can be accessed through tcaxLib APIs,
+     * the memory will be freed by FinFont function.
+     *
+     * @param font_file
+     * @param face_id
+     * @param font_size
+     * @param spacing
+     * @param space_scale
+     * @param color
+     * @param bord
+     * @param is_outline
+     * @return TCAX_PyFont
+     */
+    //InitFont(font_file, face_id, font_size, spacing, space_scale, color, bord, is_outline)
+    text(const char *font_file, int face_id, int font_size, int spacing,
+         double space_scale, uint32_t color, int bord, int is_outline);
+
+    text() : pFont(nullptr)
+    {
+        common();
+    }
+
+    /**
+     * Finalize TCAX_Font structure free all the memory occupied by it.
+     */
+    //FinFont(pyFont)
+    ~text();
+
+    /**
+     * Make TCAX PIX from text(s).
+     * @param texts
+     * @return TCAX_PyPix
+     */
+    //TextPix(pyFont, texts)
+    TCAX_PyPix get_pix_from_text(const char *texts);
+
+    /* overload */
+    //TextPix(font_file, face_id, font_size, spacing, space_scale, color, bord, is_outline, texts)
+    TCAX_PyPix get_pix_from_text_2(const char *font_file, int face_id, int font_size, int spacing,
+                                   double space_scale, uint32_t color, int bord, int is_outline,
+                                   const char *texts);
+
+    /**
+     * Get text outline points.
+     * @param text
+     * @param density
+     * @return TCAX_PyPoints
+     */
+    //TextOutlinePoints(pyFont, text, density)
+    TCAX_PyPoints get_text_outline_as_points(const char *text, double density);
+
+    /**
+     * Get text outline points.
+     * @param font_file
+     * @param face_id
+     * @param font_size
+     * @param text
+     * @param density
+     * @return TCAX_PyPoints
+     */
+    /* overload */
+    //TextOutlinePoints(font_file, face_id, font_size, text, density)
+    TCAX_PyPoints get_text_outline_as_points_2(const char *font_file, int face_id, int font_size,
+                                               const char *text, double density);
+
+    /**
+     * Get text(s) metrics.
+     * @param self reserved
+     * @param args (pyFont, texts) or (font_file, face_id, font_size, spacing, space_scale, text)
+     * @return TCAX_PyTextMetrics
+     */
+    //TextMetrics(pyFont, text)
+    TCAX_PyTextMetrics get_text_metrics(const char *text);
+
+    //TextMetrics(font_file, face_id, font_size, spacing, space_scale, text)
+    TCAX_PyTextMetrics get_text_metrics_2(const char *font_file, int face_id, int font_size, int spacing,
+                                          double space_scale, const char *text);
+
+    void reset(const char *font_file, int face_id, int font_size, int spacing,
+               double space_scale, uint32_t color, int bord, int is_outline);
+
+    int init_font(TCAX_pFont pFont, char *fontFilename, int fontFaceID,
+                  int fontSize, int spacing, double spaceScale, uint32_t color,
+                  int bord, int is_outline);
+
+    void fin_font(TCAX_pFont pFont);
+
+    TCAX_pFont get_pFont() const
+    {
+        return pFont;
+    }
+
+private:
+
+    void face_set_size(FT_Face face, int size);
+
+    int get_text_pix(TCAX_pFont pFont, wchar_t text, TCAX_pPix pPix);
+
+    int get_texts_pix(TCAX_pFont pFont, const wchar_t *text, TCAX_pPix pPix);
+
+    int get_text_outline_points(const TCAX_pFont pFont, wchar_t text, double density, double **pXBuf,
+                                double **pYBuf, unsigned char **pABuf, int *pCount);
+
+    int _tcax_lib_get_text_metrics(const TCAX_pFont pFont, const wchar_t *text, TCAX_pTextMetrics pTextMetrics);
+
+    TCAX_PyTextMetrics convert_text_metrics(const TCAX_pTextMetrics pTextMetrics);
+
+    TCAX_pFont pFont;
+
+};
 
 #endif    /* TCAXLIB_TEXT_H */

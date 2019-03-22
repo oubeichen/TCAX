@@ -22,9 +22,9 @@
 
 file::file(const char *ass_file, const char *ass_header) :
     pAssFile(new TCAX_AssFile),
-    success(false),
     append(false)
 {
+    common();
     process_file(ass_file, ass_header);
 }
 
@@ -69,11 +69,6 @@ void file::reset(const char *ass_file, const char *ass_header)
     append = false;
 
     process_file(ass_file, ass_header);
-}
-
-bool file::is_success() const
-{
-    return success;
 }
 
 bool file::is_append() const
