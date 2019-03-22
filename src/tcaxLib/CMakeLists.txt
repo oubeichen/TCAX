@@ -1,7 +1,7 @@
 add_library(tcaxLib SHARED
         std.h
-        pix.cpp
         pix.h
+        pix.cpp
         file.h
         file.cpp
         text.h

@@ -20,7 +20,7 @@
 
 #include "image.h"
 
-TCAX_PyPix tcaxlib_get_pix_from_image(const char *filename, int dst_width, int dst_height)
+TCAX_PyPix image::get_pix_from_image(const char *filename, int dst_width, int dst_height)
 {
 
     TCAX_Pix pix;
@@ -108,7 +108,7 @@ TCAX_PyPix tcaxlib_get_pix_from_image(const char *filename, int dst_width, int d
     } else return tcaxlib_convert_pix(&pix, 1);
 }
 
-TCAX_Py_Error_Code tcaxlib_save_pix_to_image(const char *filename, TCAX_PyPix &PIX,
+TCAX_Py_Error_Code image::save_pix_to_image(const char *filename, TCAX_PyPix &PIX,
                                              int dst_width, int dst_height)
 {
     TCAX_Pix pixSource;
@@ -158,4 +158,3 @@ TCAX_Py_Error_Code tcaxlib_save_pix_to_image(const char *filename, TCAX_PyPix &P
     fclose(fp);
     return py::long_(0);
 }
-

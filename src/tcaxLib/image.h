@@ -35,24 +35,31 @@ extern "C"
 
 #define PNG_SIG_BYTES 8
 
-/**
- * Make TCAX PIX from image file (.png).
- * @param self reserved
- * @param args (filename) or (filename, width, height)
- * @return TCAX_PyPix
- */
-//ImagePix(filename, width = 0, height = 0)
-extern TCAX_PyPix tcaxlib_get_pix_from_image(const char *filename, int dst_width = 0, int dst_height = 0);
+class image
+{
+public:
+    image(){};
 
-/**
- * Save TCAX PIX to image file (.png).
- * @param self reserved
- * @param args (filename, PIX) or (filename, PIX, width, height)
- * @return TCAX_Py_Error_Code
- */
-//SavePix(filename, PIX, width = 0, height = 0)
-extern TCAX_Py_Error_Code tcaxlib_save_pix_to_image(const char *filename, TCAX_PyPix &PIX,
-                                                    int dst_width = 0, int dst_height = 0);
+    ~image(){};
+
+    /**
+     * Make TCAX PIX from image file (.png).
+     * @param self reserved
+     * @param args (filename) or (filename, width, height)
+     * @return TCAX_PyPix
+     */
+    //ImagePix(filename, width = 0, height = 0)
+    TCAX_PyPix get_pix_from_image(const char *filename, int dst_width = 0, int dst_height = 0);
+
+    /**
+     * Save TCAX PIX to image file (.png).
+     * @param self reserved
+     * @param args (filename, PIX) or (filename, PIX, width, height)
+     * @return TCAX_Py_Error_Code
+     */
+    //SavePix(filename, PIX, width = 0, height = 0)
+    TCAX_Py_Error_Code save_pix_to_image(const char *filename, TCAX_PyPix &PIX,
+                                                        int dst_width = 0, int dst_height = 0);
+};
 
 #endif    /* TCAXLIB_IMAGE_H */
-

@@ -20,63 +20,87 @@
 
 #include "file.h"
 
-//CreateAssFile(ass_file, ass_header)
-TCAX_PyAssFile tcaxlib_create_ass_file(const char *ass_file, const char *ass_header)
+file::file(const char *ass_file, const char *ass_header) :
+    pAssFile(new TCAX_AssFile),
+    success(false),
+    append(false)
 {
-    TCAX_pAssFile pAssFile;
-    TCAX_PyAssFile pyAssFile;
-    
-    pAssFile = (TCAX_pAssFile)malloc(sizeof(TCAX_AssFile));
-    pAssFile->fp = fopen(ass_file, "wb");
-    if (!pAssFile->fp) {
-        free(pAssFile);
-        PyErr_SetString(PyExc_RuntimeError, "CreateAssFile error, failed to create the file!\n");
-        return py::tuple();
-    }
-    
-    fwrite(ass_header, sizeof(char), strlen(ass_header), pAssFile->fp);
-    pyAssFile = py::make_tuple(pAssFile);
-    return pyAssFile;
+    process_file(ass_file, ass_header);
 }
 
-int _tcaxlib_check_if_file_exists(const char *filename)
+file::~file()
+{
+    fclose(pAssFile->fp);
+    delete pAssFile;
+    pAssFile = nullptr;
+}
+
+//WriteAssFile(pyAssFile, ASS_BUF)
+bool file::write_ass_file(py::list &ASS_BUF)
+{
+    if (!success)
+    {
+        return false;
+    }
+
+    char *assString;
+    int size;
+
+    if (py::len(ASS_BUF) == 0)
+    {
+        PyErr_SetString(PyExc_RuntimeWarning, "WriteAssFile warning, empty list 'ASS_BUF'\n");
+        return false;
+    }
+
+    convert_ass_list_to_string(ASS_BUF, &assString, &size);
+    fwrite(assString, sizeof(char), size, pAssFile->fp);
+    delete[] assString;
+    return true;
+}
+
+void file::reset(const char *ass_file, const char *ass_header)
+{
+    fclose(pAssFile->fp);
+    delete pAssFile;
+    pAssFile = nullptr;
+
+    pAssFile = new TCAX_AssFile;
+    success = false;
+    append = false;
+
+    process_file(ass_file, ass_header);
+}
+
+bool file::is_success() const
+{
+    return success;
+}
+
+bool file::is_append() const
+{
+    if (!success)
+    {
+        return false;
+    }
+
+    return append;
+}
+
+/* protected */
+bool file::check_if_file_exists(const char *filename)
 {
     FILE *fp;
     fp = fopen(filename, "rb");
     if (fp)
     {
         fclose(fp);
-        return 1;
+        return true;
     }
-    
-    return 0;
+
+    return false;
 }
 
-//AppendAssFile(ass_file)
-TCAX_PyAssFile tcaxlib_append_ass_file(const char *ass_file)
-{
-    TCAX_pAssFile pAssFile;
-    TCAX_PyAssFile pyAssFile;
-    
-    if (!_tcaxlib_check_if_file_exists(ass_file))
-    {
-        PyErr_SetString(PyExc_RuntimeError, "AppendAssFile error, failed to open the file!\n");
-        return py::tuple();
-    }
-    
-    pAssFile = (TCAX_pAssFile)malloc(sizeof(TCAX_AssFile));
-    pAssFile->fp = fopen(ass_file, "ab");
-    if (!pAssFile->fp) {
-        free(pAssFile);
-        PyErr_SetString(PyExc_RuntimeError, "AppendAssFile error, failed to open the file!\n");
-        return py::tuple();
-    }
-    
-    pyAssFile = py::make_tuple(pAssFile);
-    return pyAssFile;
-}
-
-static void _tcaxlib_convert_ass_list_to_string(py::list &assList, char **pAssString, int *pCount)
+void file::convert_ass_list_to_string(py::list &assList, char **pAssString, int *pCount)
 {
     int i, count, size, offset;
     char *assString;
@@ -86,7 +110,7 @@ static void _tcaxlib_convert_ass_list_to_string(py::list &assList, char **pAssSt
     assLineSize = (int *)malloc(count * sizeof(int));
     pAssLine = (char **)malloc(count * sizeof(char *));
     size = 0;
-    for (i = 0; i < count; i++)
+    for (i = 0; i < count; ++i)
     {
         pAssLine[i] = py::extract<char *>(assList[i]);
         assLineSize[i] = static_cast<int>(strlen(pAssLine[i]));
@@ -95,10 +119,12 @@ static void _tcaxlib_convert_ass_list_to_string(py::list &assList, char **pAssSt
     
     assString = (char *)malloc((size + 1) * sizeof(char));
     offset = 0;
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; ++i)
+    {
         memcpy(assString + offset, pAssLine[i], assLineSize[i] * sizeof(char));
         offset += assLineSize[i];
     }
+
     assString[size] = '\0';
     free(pAssLine);
     free(assLineSize);
@@ -106,34 +132,46 @@ static void _tcaxlib_convert_ass_list_to_string(py::list &assList, char **pAssSt
     *pCount = size;
 }
 
-//WriteAssFile(pyAssFile, ASS_BUF)
-TCAX_Py_Error_Code tcaxlib_write_ass_file(TCAX_PyAssFile &pyAssFile, py::list &ASS_BUF)
+void file::process_file(const char *ass_file, const char *ass_header)
 {
-    TCAX_pAssFile pAssFile;
-    char *assString;
-    int size;
-    
-    if (py::len(ASS_BUF) == 0)
+    if (ass_header != nullptr)
     {
-        PyErr_SetString(PyExc_RuntimeWarning, "WriteAssFile warning, empty list 'ASS_BUF'\n");
-        return py::long_(-1);
+        pAssFile->fp = fopen(ass_file, "wb");
+        if (!pAssFile->fp)
+        {
+            delete pAssFile;
+            pAssFile = nullptr;
+            success = false;
+            PyErr_SetString(PyExc_RuntimeError, "CreateAssFile error, failed to create the file!\n");
+        }
+        else
+        {
+            fwrite(ass_header, sizeof(char), strlen(ass_header), pAssFile->fp);
+            success = true;
+        }
     }
-    
-    pAssFile = py::extract<TCAX_pAssFile>(pyAssFile[0]);
-    _tcaxlib_convert_ass_list_to_string(ASS_BUF, &assString, &size);
-    fwrite(assString, sizeof(char), size, pAssFile->fp);
-    free(assString);
-    return py::long_(0);
-}
+    else //append
+    {
+        if (!check_if_file_exists(ass_file))
+        {
+            PyErr_SetString(PyExc_RuntimeError, "AppendAssFile error, failed to open the file!\n");
+            delete pAssFile;
+            pAssFile = nullptr;
+            success = false;
+        }
+        else
+        {
+            pAssFile->fp = fopen(ass_file, "ab");
+            if (!pAssFile->fp)
+            {
+                delete pAssFile;
+                pAssFile = nullptr;
+                success = false;
+                PyErr_SetString(PyExc_RuntimeError, "AppendAssFile error, failed to open the file!\n");
+            }
 
-//FinAssFile(pyAssFile)
-TCAX_Py_Error_Code tcaxlib_fin_ass_file(TCAX_PyAssFile &pyAssFile)
-{
-    TCAX_pAssFile pAssFile;
-    
-    pAssFile = py::extract<TCAX_pAssFile>(pyAssFile[0]);
-    fclose(pAssFile->fp);
-    free(pAssFile);
-    pyAssFile = py::tuple(); //reset to none
-    return py::long_(0);
+            success = true;
+            append = true;
+        }
+    }
 }

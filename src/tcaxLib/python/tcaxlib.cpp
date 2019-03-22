@@ -18,6 +18,7 @@
  *
  */
 
+#include "boost/shared_ptr.hpp"
 #include "../file.h"
 #include "../pix.h"
 #include "../text.h"
@@ -30,8 +31,9 @@ const char *tcaxlib_get_version()
 }
 
 /* overloads */
-BOOST_PYTHON_FUNCTION_OVERLOADS(ImagePix_overloads, tcaxlib_get_pix_from_image, 1, 3)
-BOOST_PYTHON_FUNCTION_OVERLOADS(SavePix_overloads,  tcaxlib_save_pix_to_image,  2, 4)
+/* image */
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(ImagePix_overloads, get_pix_from_image, 1, 3)
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(SavePix_overloads,  save_pix_to_image,  2, 4)
 
 BOOST_PYTHON_MODULE(tcaxLib)
 {
@@ -62,12 +64,16 @@ BOOST_PYTHON_MODULE(tcaxLib)
     py::def("InitBigPix",        tcaxlib_init_big_pix);                             //InitBigPix()
     py::def("BigPixAdd",         tcaxlib_big_pix_add);                              //BigPixAdd(BIG_PIX, PIX, offset_x, offset_y, layer)
     py::def("ConvertBigPix",     tcaxlib_convert_big_pix);                          //ConvertBigPix(BIG_PIX)
-    
+    py::register_ptr_to_python<TCAX_pPix>();
+    py::register_ptr_to_python<TCAX_pPoints>();
+
     /* in file.h */
-    py::def("CreateAssFile",     tcaxlib_create_ass_file);                          //CreateAssFile(ass_file, ass_header)
-    py::def("AppendAssFile",     tcaxlib_append_ass_file);                          //AppendAssFile(ass_file)
-    py::def("WriteAssFile",      tcaxlib_write_ass_file);                           //WriteAssFile(pyAssFile, ASS_BUF)
-    py::def("FinAssFile",        tcaxlib_fin_ass_file);                             //FinAssFile(pyAssFile)
+    py::class_<file>("file", py::init<const char *, py::optional<const char *>>())
+    .def("WriteAssFile", &file::write_ass_file)
+    .def("reset", &file::reset)
+    .def("isSuccess", &file::is_success)
+    .def("isAppend", &file::is_append)
+    ;
 
     /* in text.h */
     py::def("InitFont",          tcaxlib_init_py_font);                             //InitFont(font_file, face_id, font_size, spacing, space_scale, color, bord, is_outline)
@@ -80,8 +86,10 @@ BOOST_PYTHON_MODULE(tcaxLib)
     py::def("TextMetrics",       tcaxlib_get_text_metrics_2);                       //TextMetrics(font_file, face_id, font_size, spacing, space_scale, text)
 
     /* in image.h */
-    py::def("ImagePix",          tcaxlib_get_pix_from_image, ImagePix_overloads()); //ImagePix(filename, width = 0, height = 0)
-    py::def("SavePix",           tcaxlib_save_pix_to_image, SavePix_overloads());   //SavePix(filename, PIX, width = 0, height = 0)
+    py::class_<image>("image")
+    .def("ImagePix",             &image::get_pix_from_image, ImagePix_overloads()) //ImagePix(filename, width = 0, height = 0)
+    .def("SavePix",              &image::save_pix_to_image, SavePix_overloads()) //SavePix(filename, PIX, width = 0, height = 0)
+    ;
 
     /* in utility.h */
     py::def("TextOutlineDraw",   tcaxlib_get_text_outline_as_string);               //TextOutlineDraw(pyFont, text, x, y)
@@ -95,4 +103,6 @@ BOOST_PYTHON_MODULE(tcaxLib)
     py::def("BezierN",           tcaxlib_bezier_curve_random);                      //BezierN(nPoints, xs, ys, xe, ye, xl1, yl1, xl2, yl2, order)
     py::def("GetFontSize",       tcaxlib_get_actual_font_size);                     //GetFontSize(font_file, face_id, font_size)
     py::def("CairoFontSize",     tcaxlib_calc_cairo_font_size);                     //CairoFontSize(font_file, face_id, font_size)
+    py::register_ptr_to_python<TCAX_pString>();
+    py::register_ptr_to_python<TCAX_pOutlineString>();
 }

@@ -25,7 +25,6 @@
 #include <cstring>
 
 #include "std.h"
-//#include "tcasfunc.h"
 
 /**
  * TCAX_AssFile structure
@@ -39,43 +38,51 @@ typedef struct _tcax_ass_file {
  */
 typedef py::tuple TCAX_PyAssFile;
 
-/**
- * TCAX_PyTcasFile structure that has the following form (TCAX_pTcasFile)
- */
-typedef py::tuple TCAX_PyTcasFile;
+class file
+{
+public:
 
-/**
- * Create an ASS file and returns the handler to the file.
- * @param ass_file
- * @param ass_header
- * @return TCAX_PyAssFile;
- */
-//CreateAssFile(ass_file, ass_header)
-extern TCAX_PyAssFile tcaxlib_create_ass_file(const char *ass_file, const char *ass_header);
+    /**
+     * Create an ASS file and returns the handler to the file.
+     * @param ass_file
+     * @param ass_header
+     */
+    //CreateAssFile(ass_file, ass_header)
+    file(const char *ass_file, const char *ass_header = nullptr);
 
-/**
- * Append to an existing ASS file and returns the handler to the file.
- * @param ass_file
- * @return TCAX_PyAssFile;
- */
-//AppendAssFile(ass_file)
-extern TCAX_PyAssFile tcaxlib_append_ass_file(const char *ass_file);
+    //Finalize the ASS file (close the handler to the file and destroy contents assigned to it).
+    //FinAssFile(pyAssFile)
+    ~file();
 
-/**
- * Write ASS strings to ASS file.
- * @param pyAssFile
- * @param ASS_BUF
- * @return TCAX_Py_Error_Code;
- */
-//WriteAssFile(pyAssFile, ASS_BUF)
-extern TCAX_Py_Error_Code tcaxlib_write_ass_file(TCAX_PyAssFile &pyAssFile, py::list &ASS_BUF);
+    /**
+     * Write ASS strings to ASS file.
+     * @param ASS_BUF
+     * @return TCAX_Py_Error_Code;
+     */
+    //WriteAssFile(pyAssFile, ASS_BUF)
+    bool write_ass_file(py::list &ASS_BUF);
 
-/**
- * Finalize the ASS file (close the handler to the file and destroy contents assigned to it).
- * @param pyAssFile
- * @return TCAX_Py_Error_Code;
- */
-//FinAssFile(pyAssFile)
-extern TCAX_Py_Error_Code tcaxlib_fin_ass_file(TCAX_PyAssFile &pyAssFile);
+    void reset(const char *ass_file, const char *ass_header = nullptr);
+
+    bool is_success() const;
+
+    bool is_append() const;
+
+protected:
+
+    bool check_if_file_exists(const char *filename);
+
+    void convert_ass_list_to_string(py::list &assList, char **pAssString, int *pCount);
+
+private:
+
+    TCAX_pAssFile pAssFile;
+
+    bool success;
+
+    bool append;
+
+    void process_file(const char *ass_file, const char *ass_header = nullptr);
+};
 
 #endif    /* TCAXLIB_FILE_H */
