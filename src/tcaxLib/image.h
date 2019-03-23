@@ -58,8 +58,12 @@ public:
      * @return TCAX_Py_Error_Code
      */
     //SavePix(filename, PIX, width = 0, height = 0)
-    TCAX_Py_Error_Code save_pix_to_image(const char *filename, TCAX_PyPix &PIX,
-                                         int dst_width = 0, int dst_height = 0);
+    bool save_pix_to_image(const char *filename, TCAX_PyPix &PIX,
+                           int dst_width = 0, int dst_height = 0);
+
+private:
+
+    pix Pix;
 };
 
 #endif    /* TCAXLIB_IMAGE_H */

@@ -250,6 +250,8 @@ private:
 
     TCAX_pFont pFont;
 
+    pix Pix;
+
 };
 
 #endif    /* TCAXLIB_TEXT_H */

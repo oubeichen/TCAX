@@ -99,8 +99,9 @@ double _max_distance_4(double x1, double x2, double x3, double x4)
 
 int _outline_points_move_to(const FT_Vector *to, void *user)
 {
+    pix Pix;
     TCAX_pOutlinePoints pOutline = (TCAX_pOutlinePoints)user;
-    tcaxlib_points_append(&pOutline->points, to->x / 64.0, pOutline->height - to->y / 64.0, 255);
+    Pix.points_append(&pOutline->points, to->x / 64.0, pOutline->height - to->y / 64.0, 255);
     pOutline->lastX = to->x / 64.0;
     pOutline->lastY = to->y / 64.0;
     return 0;
@@ -108,6 +109,7 @@ int _outline_points_move_to(const FT_Vector *to, void *user)
 
 int _outline_points_line_to(const FT_Vector *to, void *user)
 {
+    pix Pix;
     double xs, ys, xe, ye, x, y, t, step;
     /* int i, points; */
     TCAX_pOutlinePoints pOutline = (TCAX_pOutlinePoints)user;
@@ -118,7 +120,7 @@ int _outline_points_line_to(const FT_Vector *to, void *user)
     step = 1 / (max(abs(xe - xs), abs(ye - ys)) * pOutline->density);
     for (t = step; t < 1 + step; t += step) {
         linear_interpolation(&x, &y, xs, ys, xe, ye, t);
-        tcaxlib_points_append(&pOutline->points, x, pOutline->height - y, 255);
+        Pix.points_append(&pOutline->points, x, pOutline->height - y, 255);
     }
     pOutline->lastX = xe;
     pOutline->lastY = ye;
@@ -127,6 +129,7 @@ int _outline_points_line_to(const FT_Vector *to, void *user)
 
 int _outline_points_conic_to(const FT_Vector *control, const FT_Vector *to, void *user)
 {
+    pix Pix;
     double xs, ys, xc, yc, xe, ye, x, y, t, step;
     /* int i, points; */
     TCAX_pOutlinePoints pOutline = (TCAX_pOutlinePoints)user;
@@ -139,7 +142,7 @@ int _outline_points_conic_to(const FT_Vector *control, const FT_Vector *to, void
     step = 1 / (max(_max_distance_3(xs, xc, xe), _max_distance_3(ys, yc, ye)) * pOutline->density);
     for (t = step; t < 1 + step; t += step) {
         conic_bezier(&x, &y, xs, ys, xc, yc, xe, ye, t);
-        tcaxlib_points_append(&pOutline->points, x, pOutline->height - y, 255);
+        Pix.points_append(&pOutline->points, x, pOutline->height - y, 255);
     }
 
     pOutline->lastX = xe;
@@ -149,6 +152,7 @@ int _outline_points_conic_to(const FT_Vector *control, const FT_Vector *to, void
 
 int _outline_points_cubic_to(const FT_Vector *control1, const FT_Vector *control2, const FT_Vector *to, void *user)
 {
+    pix Pix;
     double xs, ys, xc1, yc1, xc2, yc2, xe, ye, x, y, t, step;
     TCAX_pOutlinePoints pOutline = (TCAX_pOutlinePoints)user;
     xs = pOutline->lastX;
@@ -162,7 +166,7 @@ int _outline_points_cubic_to(const FT_Vector *control1, const FT_Vector *control
     step = 1 / (max(_max_distance_4(xs, xc1, xc2, xe), _max_distance_4(ys, yc1, yc2, ye)) * pOutline->density);
     for (t = step; t < 1 + step; t += step) {
         cubic_bezier(&x, &y, xs, ys, xc1, yc1, xc2, yc2, xe, ye, t);
-        tcaxlib_points_append(&pOutline->points, x, pOutline->height - y, 255);
+        Pix.points_append(&pOutline->points, x, pOutline->height - y, 255);
     }
     pOutline->lastX = xe;
     pOutline->lastY = ye;
@@ -230,7 +234,7 @@ TCAX_PyPix text::get_pix_from_text(const char *texts)
         }
     }
 
-    return tcaxlib_convert_pix(&pix, 1);
+    return Pix.convert_pix(&pix, 1);
 }
 
 TCAX_PyPix text::get_pix_from_text_2(const char *font_file, int face_id, int font_size, int spacing,
@@ -277,7 +281,7 @@ TCAX_PyPix text::get_pix_from_text_2(const char *font_file, int face_id, int fon
 
     fin_font(&font);
     delete[] font.filename;
-    return tcaxlib_convert_pix(&pix, 1);
+    return Pix.convert_pix(&pix, 1);
 }
 
 //TextOutlinePoints(pyFont, text, density)
@@ -583,7 +587,7 @@ int text::get_text_pix(TCAX_pFont pFont, wchar_t text, TCAX_pPix pPix)
                 for (m = 0; m < pPix->width; m++) {
                     i = 4 * (l * pPix->width + m);
                     *((unsigned long *)&pPix->buf[i]) = pFont->color;
-                    pPix->buf[i + 3] = CLIP_0_255(buf_new[l * pPix->width + m] - buf_old[l * pPix->width + m]);
+                    pPix->buf[i + 3] = Pix.CLIP_0_255(buf_new[l * pPix->width + m] - buf_old[l * pPix->width + m]);
                 }
             }
             free(buf_old);

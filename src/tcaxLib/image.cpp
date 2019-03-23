@@ -100,16 +100,16 @@ TCAX_PyPix image::get_pix_from_image(const char *filename, int dst_width, int ds
         TCAX_Pix pixDst;
         pixDst.width = dst_width;
         pixDst.height = dst_height;
-        tcaxlib_resample_pix(&pix, &pixDst);
+        Pix.resample_pix(&pix, &pixDst);
         free(pix.buf);
         pixDst.initX = 0;   /* since tcaxlib_resample_pix function will change the value of initX and initY */
         pixDst.initY = 0;
-        return tcaxlib_convert_pix(&pixDst, 1);
-    } else return tcaxlib_convert_pix(&pix, 1);
+        return Pix.convert_pix(&pixDst, 1);
+    } else return Pix.convert_pix(&pix, 1);
 }
 
-TCAX_Py_Error_Code image::save_pix_to_image(const char *filename, TCAX_PyPix &PIX,
-                                             int dst_width, int dst_height)
+bool image::save_pix_to_image(const char *filename, TCAX_PyPix &PIX,
+                              int dst_width, int dst_height)
 {
     TCAX_Pix pixSource;
     TCAX_Pix pix;
@@ -119,22 +119,24 @@ TCAX_Py_Error_Code image::save_pix_to_image(const char *filename, TCAX_PyPix &PI
     png_bytepp png_data;
     int w, h, rowbytes;
 
-    tcaxlib_convert_py_pix(PIX, &pixSource);
+    Pix.convert_py_pix(PIX, &pixSource);
     if ((dst_width > 0) && (dst_height > 0))
     {
         pix.width = dst_width;
         pix.height = dst_height;
-        tcaxlib_resample_pix(&pixSource, &pix);
+        Pix.resample_pix(&pixSource, &pix);
         free(pixSource.buf);
     } else pix = pixSource;
     rowbytes = pix.width << 2;
     png_data = (png_bytepp)malloc(pix.height * sizeof(png_bytep));
-    for (h = 0; h < pix.height; h++) {
+    for (h = 0; h < pix.height; ++h)
+    {
         png_data[h] = (png_bytep)malloc(rowbytes * sizeof(png_byte));
         memset(png_data[h], 0, rowbytes * sizeof(png_byte));
     }
-    for (h = 0; h < pix.height; h++) {
-        for (w = 0; w < pix.width; w++)
+    for (h = 0; h < pix.height; ++h)
+    {
+        for (w = 0; w < pix.width; ++w)
             memcpy(png_data[h] + (w << 2), pix.buf + ((h * pix.width + w) << 2), 4 * sizeof(unsigned char));
     }
     free(pix.buf);
@@ -142,7 +144,7 @@ TCAX_Py_Error_Code image::save_pix_to_image(const char *filename, TCAX_PyPix &PI
     if (!fp)
     {
         PyErr_SetString(PyExc_RuntimeError, "SavePix error, failed to create the image!\n");
-        return py::long_();
+        return false;
     }
     png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     info_ptr = png_create_info_struct(png_ptr);
@@ -156,5 +158,5 @@ TCAX_Py_Error_Code image::save_pix_to_image(const char *filename, TCAX_PyPix &PI
     free(png_data);
     png_destroy_write_struct(&png_ptr, &info_ptr);
     fclose(fp);
-    return py::long_(0);
+    return true;
 }
