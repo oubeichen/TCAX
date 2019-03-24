@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <wchar.h>
 
-#if defined WIN32
+#ifdef _WIN32
 #define __wcs_ignore_case_cmp _wcsicmp
 #define __str_ignore_case_cmp _stricmp
 #else

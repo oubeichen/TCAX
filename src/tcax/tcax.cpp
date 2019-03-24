@@ -250,8 +250,10 @@ int file_isreg(const char *path)
 }
 #endif
 
-static void _tcax_make_full_path_of_font_file(const wchar_t *tccDirectory, TCC_pAttributes pAttributes) {
-    if (wcsstr(pAttributes->font_file, L":") == NULL) {
+static void _tcax_make_full_path_of_font_file(const wchar_t *tccDirectory, TCC_pAttributes pAttributes)
+{
+    if (wcsstr(pAttributes->font_file, L":") == NULL)
+    {
 #ifdef _WIN32
         int dir_len, len, count;
         wchar_t *tempString;
@@ -281,6 +283,7 @@ static void _tcax_make_full_path_of_font_file(const wchar_t *tccDirectory, TCC_p
             free(font_file);
         }
         free(tempString);
+    }
 #else
         //try input first
         std::wstring str1, str2;

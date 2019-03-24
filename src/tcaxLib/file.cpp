@@ -20,6 +20,10 @@
 
 #include "file.h"
 
+#ifdef _MSC_VER
+#pragma warning(disable: 4996)
+#endif    /* _MSC_VER */
+
 file::file(const char *ass_file, const char *ass_header) :
     pAssFile(new TCAX_AssFile),
     append(false)

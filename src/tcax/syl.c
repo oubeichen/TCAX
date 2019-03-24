@@ -24,7 +24,7 @@
 #pragma warning(disable: 4996)
 #endif    /* _MSC_VER */
 
-#if defined WIN32
+#ifdef _WIN32
 /* Convert between unicode big endian and unicode little endian */
 static void _libsyl_convert_endian(wchar_t *buffer, int count) {
     int i;
@@ -105,10 +105,8 @@ SYL_Error_Code libsyl_read_file_to_unicode(const char *filename, wchar_t **pBuff
     int size, count;
     unsigned char *rawBuffer;
     wchar_t *buffer;
-    printf("filename is %s\n", filename);
     fp = fopen(filename, "rb");
     if (!fp) return syl_error_file_cant_open;
-    printf("one is pass\n");
     fseek(fp, 0, SEEK_END);
     size = ftell(fp);
     fseek(fp, 0, SEEK_SET);
@@ -121,7 +119,6 @@ SYL_Error_Code libsyl_read_file_to_unicode(const char *filename, wchar_t **pBuff
         fclose(fp);
         return syl_error_file_while_reading;
     }
-    printf("two is pass\n");
     fclose(fp);
     if (size >= 3 && 0xEF == rawBuffer[0] && 0xBB == rawBuffer[1] && 0xBF == rawBuffer[2]) {    /* utf-8 */
         setlocale(LC_CTYPE, "");

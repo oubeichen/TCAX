@@ -29,8 +29,8 @@ extern "C"
 }
 
 #ifdef _WIN32
-#pragma comment(lib, "./libpng/zlib.lib")
-#pragma comment(lib, "./libpng/libpng.lib")
+#pragma comment(lib, "../libpng/zlib.lib")
+#pragma comment(lib, "../libpng/libpng.lib")
 #endif
 
 #define PNG_SIG_BYTES 8

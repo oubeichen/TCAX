@@ -25,7 +25,7 @@
 #pragma warning(disable: 4996)
 #endif    /* _MSC_VER */
 
-#if defined WIN32
+#ifdef _WIN32
 /* Convert between unicode big endian and unicode little endian */
 static void _tcaxpy_convert_endian(wchar_t *buffer, int count) {
     int i;

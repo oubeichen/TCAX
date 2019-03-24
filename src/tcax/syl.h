@@ -22,7 +22,7 @@
 #define LIBSYL_SYL_H
 #pragma once
 
-#if defined WIN32
+#ifdef _WIN32
 #include <windows.h>
 #else
 #include <locale.h>

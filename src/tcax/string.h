@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include <wctype.h>
+#include <stdint.h>
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4996)

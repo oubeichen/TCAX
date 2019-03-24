@@ -22,11 +22,11 @@
 #define TCAXPY_PY_H
 #pragma once
 
-#include <python3.7m/Python.h>
-
-#if defined WIN32
+#ifdef _WIN32
 #include <windows.h>
+#include "Python.h"
 #else
+#include <python3.7m/Python.h>
 #include <locale.h>
 #endif  /* WIN32 */
 

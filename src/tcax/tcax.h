@@ -37,7 +37,7 @@
 #endif  /* WIN32 */
 
 #if defined WIN32
-#pragma comment(lib, "./FreeType/freetype.lib")
+#pragma comment(lib, "../freetype2/freetype.lib")
 #define __wcs_ignore_case_cmp _wcsicmp
 #define __str_ignore_case_cmp _stricmp
 #else
