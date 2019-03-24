@@ -218,10 +218,15 @@ def IsLineChanged(i):
         return False
 
 def UseSitePackages():      # invoke this function right after importing tcaxPy module if you want to use Python 3rd party packages
-    sys.path.append(sys.prefix)
-    sys.path.append(sys.prefix + '\\DLLs')
-    sys.path.append(sys.prefix + '\\Lib')
-    sys.path.append(sys.prefix + '\\Lib\\site-packages')
+    if (sys.platform == "win32"):
+        sys.path.append(sys.prefix)
+        sys.path.append(sys.prefix + '\\DLLs')
+        sys.path.append(sys.prefix + '\\Lib')
+        sys.path.append(sys.prefix + '\\Lib\\site-packages')
+    else:
+        sys.path.append(sys.prefix)
+        sys.path.append(sys.prefix + '/lib')
+        sys.path.append(sys.prefix + '/lib/python3.7/site-packages')
 
 ########################################## Main FX Function #################################################
 def getpos(i,j,an):
@@ -267,12 +272,6 @@ def ass_main(ASS_BUF, SubDlg = '', Event = '', Text = ''):
         ASS_BUF.append('{0}{1}{2}\r\n'.format(SubDlg, Event, Text))
     else:
         ASS_BUF.append('{0}{{{1}}}{2}\r\n'.format(SubDlg, Event, Text))
-
-def tcas_user(TCAS_BUF, Start = 0, End = 0, PosX = 0, PosY = 0, RGB = 0xFFFFFF, Alpha = 0, Layer = 0):
-    if Alpha < 0:
-        Alpha = 0
-    if Start <= End:
-        TCAS_BUF.append((int(Start), int(End), int(Layer), int(PosX), int(PosY), int(RGB), int(Alpha)))
 
 #############################################################################################################
 
@@ -672,17 +671,32 @@ def GetWorkingDir():
 def abspath(filename):
     return sys.path[0] + '\\' + filename
 
-def MakePath(FolderIndex = 0, ImageIndex = 0, MainFolder = 'src', SubFolder = 'list', ImageName = 'img', ImageType = '.png', PathType = 'pi'):
-    if PathType == 'pi':
-        img_path = '%s\%s%d\%s%04d%s' % (MainFolder, SubFolder, FolderIndex, ImageName, ImageIndex, ImageType)
-    elif PathType == 'sys':
-        img_path = '%s\%s%d\%s (%d)%s' % (MainFolder, SubFolder, FolderIndex, ImageName, ImageIndex, ImageType)
+def MakePath(FolderIndex = 0, ImageIndex = 0, MainFolder = 'src',
+             SubFolder = 'list', ImageName = 'img', ImageType = '.png', PathType = 'pi'):
+    
+    if (sys.platform == 'win32'):
+        if PathType == 'pi':
+            img_path = '%s\%s%d\%s%04d%s' % (MainFolder, SubFolder, FolderIndex, ImageName, ImageIndex, ImageType)
+        elif PathType == 'sys':
+            img_path = '%s\%s%d\%s (%d)%s' % (MainFolder, SubFolder, FolderIndex, ImageName, ImageIndex, ImageType)
+        else:
+            img_path = '%s\%s%d\%s%04d%s' % (MainFolder, SubFolder, FolderIndex, ImageName, ImageIndex, ImageType)
     else:
-        img_path = '%s\%s%d\%s%04d%s' % (MainFolder, SubFolder, FolderIndex, ImageName, ImageIndex, ImageType)
+        if PathType == 'pi':
+            img_path = '%s/%s%d/%s%04d%s' % (MainFolder, SubFolder, FolderIndex, ImageName, ImageIndex, ImageType)
+        elif PathType == 'sys':
+            img_path = '%s/%s%d/%s (%d)%s' % (MainFolder, SubFolder, FolderIndex, ImageName, ImageIndex, ImageType)
+        else:
+            img_path = '%s/%s%d/%s%04d%s' % (MainFolder, SubFolder, FolderIndex, ImageName, ImageIndex, ImageType)
+    
     return img_path
 
 def tcaxLog(info):
-    s = str(info) + '\r\n'
+    if (sys.platform == 'win32')
+        s = str(info) + '\r\n'
+    else:
+        s = str(info) + '\n'
+    
     logfile = open(GetVal(val_OutFile) + '_data.log', 'ab')
     logfile.write(b'\xef\xbb\xbf')             # codecs.BOM_UTF8
     logfile.write(s.encode('utf-8'))
@@ -696,7 +710,7 @@ def Progress(i, j, file_id = 1, file_num = 1):
     for l in range(i):
         completed += __tcax_data[val_nTexts][l]
     completed += j + 1
-    ShowProgress(total, completed, file_id - 1, file_num)
+    utility().ShowProgress(total, completed, file_id - 1, file_num)
 
 def progress(completed, total):
     ShowProgress(total, completed, 0, 1)
@@ -1063,7 +1077,3 @@ def PixSwitchRB(PIX):
     return (PIX[0], PIX[1], tuple(buf))
 
 #############################################################################################################
-
-
-
-
