@@ -55,6 +55,12 @@ typedef tcas_u32 tcas_dword;
 typedef tcas_u16 tcas_word;
 typedef tcas_u8 tcas_byte;
 
+struct st_tcas_u32      //32 bit color
+{
+	unsigned char  b, g, r, a;
+};
+
+
 #define TCAS_SIGNATURE ((tcas_unit)0x53414354)    /**< The signature of TCAS file is 0x54 0x43 0x41 0x53, which means `TCAS' in ASCII */
 
 /* predefined values */

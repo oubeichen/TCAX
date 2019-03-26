@@ -110,8 +110,7 @@ inline void FCObjImage::Stretch_Smooth (int nNewWidth, int nNewHeight, FCObjProg
         BYTE           * pWrite = GetBits(y) ;
         for (int x=0 ; x < Width() ; x++, pWrite += nSpan)
         {
-            // 计算原图对应点
-            const int    nSrcX = pTabX[x],
+            // 计算原图对应祦E            const int    nSrcX = pTabX[x],
                          nXMod = pXMod[x] ;
 
             const BYTE   * pOldPix = imgOld.GetBits (nSrcX, nSrcY) ;

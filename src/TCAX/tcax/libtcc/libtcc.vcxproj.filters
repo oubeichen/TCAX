@@ -24,9 +24,6 @@
     <ClCompile Include="tcc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\libmap\strmap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -50,5 +47,10 @@
     <ClInclude Include="..\libmap\tccmap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="libtcc.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

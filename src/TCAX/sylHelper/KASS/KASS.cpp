@@ -1,4 +1,4 @@
-#include "KASS.h"
+ï»¿#include "KASS.h"
 #include "resource.h"
 
 
@@ -81,8 +81,8 @@ BOOL Kass::OpenFile(LPCWSTR lpFileName)
 	::CloseHandle(hFile);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
-		::MessageBox(	m_pFrm->FrmGetWnd(), L"ÎÞ·¨´ò¿ªÎÄ¼þ...      ",
-						L"´íÎó", MB_OK | MB_ICONEXCLAMATION);
+		::MessageBox(	m_pFrm->FrmGetWnd(), L"æ— æ³•æ‰“å¼€æ–‡ä»¶...      ",
+						L"", MB_OK | MB_ICONEXCLAMATION);
 		return FALSE;
 	}
 	if ((dwSize >= 2) && ((BYTE)(lpBuffer[0] >> 8) == 0xFE) && ((BYTE)lpBuffer[0] == 0xFF))
@@ -127,14 +127,14 @@ BOOL Kass::GetWindowTXT()
 	m_dwASSInSize = ::GetWindowTextLength(::GetDlgItem(m_pFrm->FrmGetWnd(), IDC_MAIN_EDIT_ASS));
 	if (m_dwASSInSize > LEN_READ)
 	{
-		::MessageBox(	m_pFrm->FrmGetWnd(), L"ASSÎÄ¼þµÄ³¤¶È²»ÄÜ³¬¹ý30KB...      ",
-						L"´íÎó", MB_OK | MB_ICONEXCLAMATION);
+		::MessageBox(	m_pFrm->FrmGetWnd(), L"ASSæ–‡ä»¶çš„é•¿åº¦ä¸èƒ½è¶…è¿‡30KB...      ",
+						L"", MB_OK | MB_ICONEXCLAMATION);
 		return FALSE;
 	}
 	else if (m_dwASSInSize < 1)
 	{
-		::MessageBox(	m_pFrm->FrmGetWnd(), L"ASSÎÄ¼þ²»ÄÜÎª¿Õ...      ", 
-						L"´íÎó", MB_OK | MB_ICONINFORMATION);
+		::MessageBox(	m_pFrm->FrmGetWnd(), L"ASSæ–‡ä»¶ä¸èƒ½ä¸ºç©º...      ", 
+						L"", MB_OK | MB_ICONINFORMATION);
 		return FALSE;
 	}
 	m_ASSIn = new WCHAR [m_dwASSInSize + 1];
@@ -161,8 +161,8 @@ BOOL Kass::TcDlg()
 	int iHead2 = strTemp.Find(L", Start, End, ");
 	if (iHead1 == -1 && iHead2 == -1)
 	{
-		::MessageBox(	m_pFrm->FrmGetWnd(), L"´ËASSÎÄ¼þÎÞÐ§...      ", 
-						L"´íÎó", MB_OK | MB_ICONEXCLAMATION);
+		::MessageBox(	m_pFrm->FrmGetWnd(), L"æ­¤ASSæ–‡ä»¶æ— æ•ˆ...      ", 
+						L"", MB_OK | MB_ICONEXCLAMATION);
 		return FALSE;
 	}
 	iHead1 = strTemp.Find(L"\r\n", iHead1 + 10 + 1 + 60);
@@ -198,8 +198,8 @@ BOOL Kass::TcDlg()
 			m_Dlg[iIdx - iDiff - 1] = strTemp.Mid(arrIdx[iIdx - 1] + 2, arrIdx[iIdx] - arrIdx[iIdx - 1] - 2);
 			if (iIdx - iDiff >= LEN_LINES)
 			{
-				::MessageBox(	m_pFrm->FrmGetWnd(), L"Ëù´¦ÀíASSÎÄ¼þµÄDialogueÐÐÊý²»³¬¹ý120...      ", 
-								L"¾¯¸æ", MB_OK | MB_ICONINFORMATION);
+				::MessageBox(	m_pFrm->FrmGetWnd(), L"æ‰€å¤„åŽ†]SSæ–‡ä»¶çš„Dialogueè¡Œæ•°ä¸è¶…è¿‡120...      ", 
+								L"", MB_OK | MB_ICONINFORMATION);
 				m_nLines = 119;
 				return TRUE;
 			}
@@ -339,8 +339,8 @@ BOOL Kass::TcSaveASS(LPWSTR lpFileName)
 									NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
-		::MessageBox(	m_pFrm->FrmGetWnd(), L"ÎÞ·¨±£´æÎÄ¼þ...      ",
-						L"´íÎó", MB_OK | MB_ICONEXCLAMATION);
+		::MessageBox(	m_pFrm->FrmGetWnd(), L"æ— æ³•ä¿å­˜æ–‡ä»¶...      ",
+						L"", MB_OK | MB_ICONEXCLAMATION);
 		return FALSE;
 	}
 	::WriteFile(hFile, m_ASSOut, 2 * m_dwASSOutSize + 2, &dwSize, NULL);

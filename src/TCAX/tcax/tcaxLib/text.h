@@ -27,6 +27,7 @@
 #include FT_FREETYPE_H
 #include FT_STROKER_H
 #include FT_TRUETYPE_TABLES_H
+#pragma comment (lib, "legacy_stdio_definitions.lib")
 #pragma comment(lib, "./FreeType/freetype248.lib")
 
 

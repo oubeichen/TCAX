@@ -124,7 +124,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	::RegSetValueW(hKey, NULL, REG_SZ, wcsPath + L"icons\\tcas.ico", 0);
 	::RegCloseKey(hKey);
 	::SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST | SHCNF_FLUSHNOWAIT, 0, 0);
-    ::MessageBoxW(NULL, L"TCAX file association successfully executed.\n\nTCAX程序文件关联成功执行, 请点确定.", L"TCAX - Info", MB_OK | MB_ICONINFORMATION);
+    ::MessageBoxW(NULL, L"TCAX file association successfully executed.\n\nTCAX program file association successfully executed, please confirm.", L"TCAX - Info", MB_OK | MB_ICONINFORMATION);
 	return TRUE;
 }
 

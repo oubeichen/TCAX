@@ -1,4 +1,4 @@
-/*
+ï»¿/*
  *   Copyright (C) =USTC= Fu Li
  *
  *   Author   :  Fu Li
@@ -61,7 +61,7 @@
     class FCCmdLayerSaveProperty ; // save layer's property
     class FCCmdLayerExchange ; // change layer's sequence in canvas
 
-    // ×éºÏÃüÁî£¬¿ÉÒÔ°ÑÆµ·±Ê¹ÓÃµÄcmd£¨Èç£ºlayer move×éºÏ³ÉÎªÒ»¸öcmd£©
+    // ç»„åˆå‘½ä»¤ï¼Œå¯ä»¥æŠŠé¢‘ç¹ä½¿ç”¨çš„cmdï¼ˆå¦‚ï¼šlayer moveç»„åˆæˆä¸ºä¸€ä¸ªcmdï¼‰
 //  class FCCmdComposite ;
         class FCCmdLayerMerge ; // merge layers
         class FCCmdLayerListRemove ; // delete layers from canvas
@@ -72,7 +72,7 @@
             class FCCmdCanvasRotate ; // rotate canvas
             class FCCmdCanvasStretch ; // stretch canvas
             class FCCmdCanvasCrop ; // crop canvas
-            class FCCmdCanvasAutoCrop ; // ×Ô¶¯²Ã¼õ»­²¼/auto crop canvas
+            class FCCmdCanvasAutoCrop ; // è‡ªåŠ¨è£å‡ç”»å¸ƒ/auto crop canvas
 
 //=============================================================================
 /**
@@ -951,7 +951,7 @@ private:
 
             FCObjImage     imgOld (selCurr) ;
             selCurr.Create (RECTWIDTH(rcDest), RECTHEIGHT(rcDest), 8) ;
-            selCurr.CoverBlock (imgOld, rcCurr.left-rcDest.left, rcCurr.top-rcDest.top) ; // ¸²¸ÇÔ­Í¼
+            selCurr.CoverBlock (imgOld, rcCurr.left-rcDest.left, rcCurr.top-rcDest.top) ; // è¦†ç›–åŸå›¾
             selCurr.SetGraphObjPos (rcDest.left, rcDest.top) ;
             rcCurr = rcDest ; // rcCurr now put rect of new selection on canvas
         }
@@ -1526,7 +1526,7 @@ public:
     }
     virtual ~FCCmdLayerAdd()
     {
-        // ÆäÊµÍ¼²ãremoveÊ±¾Í¸Ã±»É¾³ı£¬Ö»ÊÇÎªÁË½ÚÊ¡ÄÚ´æ£¬²ÅÔİÊ±·Åµ½removeÁĞ±íÖĞ
+        // å…¶å®å›¾å±‚removeæ—¶å°±è¯¥è¢«åˆ é™¤ï¼Œåªæ˜¯ä¸ºäº†èŠ‚çœå†…å­˜ï¼Œæ‰æš‚æ—¶æ”¾åˆ°removeåˆ—è¡¨ä¸­
         if (m_bRemoved)
             m_pCanvas->DeleteLayerFromRemoveList (m_pAddLayer) ;
     }
@@ -1569,7 +1569,7 @@ public:
     }
     virtual ~FCCmdLayerRemove()
     {
-        // ÆäÊµÍ¼²ãremoveÊ±¾Í¸Ã±»É¾³ı£¬Ö»ÊÇÎªÁË½ÚÊ¡ÄÚ´æ£¬²ÅÔİÊ±·Åµ½removeÁĞ±íÖĞ
+        // å…¶å®å›¾å±‚removeæ—¶å°±è¯¥è¢«åˆ é™¤ï¼Œåªæ˜¯ä¸ºäº†èŠ‚çœå†…å­˜ï¼Œæ‰æš‚æ—¶æ”¾åˆ°removeåˆ—è¡¨ä¸­
         if (m_bRemoved)
             m_pCanvas->DeleteLayerFromRemoveList (m_pRemoveLayer) ;
     }
@@ -1918,12 +1918,12 @@ public:
     {
         nAngle = FClamp (nAngle, 0, 360) ;
 
-        // ¼ÆËã»­²¼ĞÂ³ß´ç
+        // è®¡ç®—ç”»å¸ƒæ–°å°ºå¯¸
         const SIZE     OldSize = rCanvas.GetCanvasDimension() ;
         const int      nTmpAng = FMax (0, nAngle % 180) ;
         const double   fSin = sin(AngleToRadian(nTmpAng % 90)),
                        fCos = cos(AngleToRadian(nTmpAng % 90)) ;
-        // ×¢ÒâÕâÀïµÄ¿í¸ß¼ÆËã
+        // æ³¨æ„è¿™é‡Œçš„å®½é«˜è®¡ç®—
         if (nTmpAng >= 90)
         {
             m_NewCanvasSize.cx = FRound (OldSize.cx * fSin + OldSize.cy * fCos) ;
@@ -1938,8 +1938,8 @@ public:
         {
             FCObjLayer     * pLayer = rCanvas.GetLayer(i) ;
             
-            // ¼ÆËãĞÂÎ»ÖÃ
-            // ÕâÀïÌØÊâµã£¬ÏÈÒÆ¶¯£¬ºóĞı×ª£¬ÒòÎªĞı×ªÊ±»áÈÆÖĞĞÄµãĞı×ª
+            // è®¡ç®—æ–°ä½ç½®
+            // è¿™é‡Œç‰¹æ®Šç‚¹ï¼Œå…ˆç§»åŠ¨ï¼Œåæ—‹è½¬ï¼Œå› ä¸ºæ—‹è½¬æ—¶ä¼šç»•ä¸­å¿ƒç‚¹æ—‹è½¬
             POINT		ptNew = pLayer->GetGraphObjPos() ;
             ptNew.x += (m_NewCanvasSize.cx-OldSize.cx)/2 ;
             ptNew.y += (m_NewCanvasSize.cy-OldSize.cy)/2 ;
@@ -2014,7 +2014,7 @@ public:
         m_NewCanvasSize.cy = RECTHEIGHT(rcSel) ;
     }
 private:
-    // ²Ã¼ôµ¥²ãÂß¼­
+    // è£å‰ªå•å±‚é€»è¾‘
     class FCCmdCanvasCrop_Layer : public FCCmdLayerOperation
     {
     public:
@@ -2050,7 +2050,7 @@ private:
 };
 
 //============================================================================
-// ×Ô¶¯²Ã¼õ»­²¼/auto crop canvas£¬²Ãµôcanvas±ßÉÏÍ¸Ã÷µÄÇøÓò
+// è‡ªåŠ¨è£å‡ç”»å¸ƒ/auto crop canvasï¼Œè£æ‰canvasè¾¹ä¸Šé€æ˜çš„åŒºåŸŸ
 class FCCmdCanvasAutoCrop : public FCCmdCanvasOperation
 {
 public:

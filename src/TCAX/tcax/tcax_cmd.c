@@ -41,7 +41,8 @@
 #define TCAX_CMD_MENU         'm'
 
 
-void printMenu() {
+void printMenu()
+{
     printf("\n\n");
     printf("----------------- MENU -----------------\n");
     printf("1 - parse a TCC file\n");
@@ -53,94 +54,148 @@ void printMenu() {
 }
 
 
-int main(int argc, char *argv[]) {
-    DWORD executionTime;
-    int len, tcaxCmd;
-    char szFilename[1024];
-    char *outFilename;
-    printf("TCAX version 1.2.0 [2012-08-03] [Anniversary]\n");
-    printf("(C) Copyright 2009-2012 milkyjing\n\n");
-    if (tcaxpy_init_python() != py_error_success) return -1;
-    if (2 == argc) {
+int main(int argc, char *argv[])
+{
+	DWORD executionTime;
+	int len, tcaxCmd;
+	char szFilename[1024];
+	char *outFilename;
+
+	printf("TCAX version 1.2.0 [2012-08-03] [Anniversary]\n");
+	printf("Copyright 2009-2012 milkyjing\n");
+	printf("Modified 2018 by ema\n\n");
+
+	if (tcaxpy_init_python() != py_error_success)
+	{
+		return -1;
+	}
+
+    if (argc > 1)
+	{
         executionTime = GetTickCount();
         tcax_make_out_filename_from_tcc(argv[1], &outFilename);
-        if (tcax_entry(argv[1], outFilename) != 0) {
+        if (tcax_entry(argv[1], outFilename) != 0) 
+		{
             free(outFilename);
-            printf("INFO: Task failed!\n");
-            printf("\n\n温馨提醒: 如果不清楚造成本错误的原因, 请保留本窗口截图以及当前特效工程, \n访问 http://tcax.rhacg.com/forum.php?mod=forumdisplay&fid=38 发帖以获取帮助.\n\n");
-        } else {
+            printf("Info: Task failed!\n");
+            printf("\nTip: If you don't know the cause of this error, please keep the screenshot of this window.\nAccesses http://tcax.org for help.\n");
+        }
+		else
+		{
             free(outFilename);
-            printf("INFO: Task has been completed!\n");
-            printf("INFO: execution duration is %i seconds\n", (GetTickCount() - executionTime) / 1000);
+            printf("Info: Task has been completed!\n");
+            printf("Info: execution duration is %i seconds\n", (GetTickCount() - executionTime) / 1000);
         }
         tcaxpy_fin_python();
-        system("PAUSE");
+
+		if (argc > 2)
+		{
+			system("PAUSE");
+		}
         return 0;
     }
     printMenu();
-    while (1) {
+    while (1)
+	{
         printf("Please enter a number: ");
         tcaxCmd = getchar();
-        if ('\n' != tcaxCmd)
-            while ('\n' != getchar()) continue;    /* read the '\n' character brought in by the enter key to avoid the gets function to read it */
-        if (TCAX_CMD_EXIT == tcaxCmd) {
-            printf("Bye, Bye!\n");
+		if ('\n' != tcaxCmd)
+		{
+			while ('\n' != getchar()) continue;    /* read the '\n' character brought in by the enter key to avoid the gets function to read it */
+		}
+        if (TCAX_CMD_EXIT == tcaxCmd)
+		{
+            printf("See you!\n");
             break;
-        } else if (TCAX_CMD_PARSE_TCC == tcaxCmd) {
-            do {
+        }
+		else if (TCAX_CMD_PARSE_TCC == tcaxCmd) 
+		{
+            do 
+			{
                 printf("Please enter the TCC filename: ");
-                gets(szFilename);
+				gets_s(szFilename, sizeof(szFilename));
                 len = strlen(szFilename);
             }
+
             while (!(len > 4 && __str_ignore_case_cmp(szFilename + len - 4, ".tcc") == 0));
+
             executionTime = GetTickCount();
             tcax_make_out_filename_from_tcc(szFilename, &outFilename);
             if (tcax_entry(szFilename, outFilename) != 0) {
                 free(outFilename);
-                printf("INFO: Task failed!\n\n");
-                printf("\n\n温馨提醒: 如果不清楚造成本错误的原因, 请保留本窗口截图以及当前特效工程, \n访问 http://tcax.rhacg.com/forum.php?mod=forumdisplay&fid=38 发帖以获取帮助.\n\n");
-            } else {
-                free(outFilename);
-                printf("INFO: Task has been completed!\n");
-                printf("INFO: execution duration is %i seconds\n\n", (GetTickCount() - executionTime) / 1000);
+                printf("Info: Task failed!\n\n");
+                printf("\nTip: If you don't know the cause of this error, please keep the screenshot of this window.\nAccesses http://tcax.org for help.\n");
             }
-        } else if (TCAX_CMD_DEFAULT_PY == tcaxCmd) {
-            do {
+			else 
+			{
+                free(outFilename);
+                printf("Info: Task has been completed!\n");
+                printf("Info: execution duration is %i seconds\n\n", (GetTickCount() - executionTime) / 1000);
+            }
+        } 
+		else if (TCAX_CMD_DEFAULT_PY == tcaxCmd) 
+		{
+            do
+			{
                 printf("Please enter the tcaxPy script filename: ");
-                gets(szFilename);
+				gets_s(szFilename, 1024);
                 len = strlen(szFilename);
             }
+
             while (!(len > 3 && __str_ignore_case_cmp(szFilename + len - 3, ".py") == 0));
-            if (tcaxpy_create_py_template(szFilename) != tcc_error_success)
-                printf("INFO: Task failed!\n\n");
-            else
-                printf("INFO: Task has been completed!\n\n");
-        } else if (TCAX_CMD_DEFAULT_TCC == tcaxCmd) {
-            do {
+
+			if (tcaxpy_create_py_template(szFilename) != tcc_error_success)
+			{
+				printf("Info: Task failed!\n\n");
+			}
+			else
+			{
+				printf("Info: Task has been completed!\n\n");
+			}
+        }
+		else if (TCAX_CMD_DEFAULT_TCC == tcaxCmd) 
+		{
+            do
+			{
                 printf("Please enter the TCC filename: ");
-                gets(szFilename);
+				gets_s(szFilename, 1024);
                 len = strlen(szFilename);
             }
             while (!(len > 4 && __str_ignore_case_cmp(szFilename + len - 4, ".tcc") == 0));
-            if (libtcc_create_default_tcc_file(szFilename) != tcc_error_success)
-                printf("INFO: Task failed!\n\n");
+			if (libtcc_create_default_tcc_file(szFilename) != tcc_error_success)
+			{
+				printf("Info: Task failed!\n");
+			}
+			else
+			{
+				printf("Info: Task has been completed!\n");
+			}
+        }
+		else if (TCAX_CMD_EXEC_PY == tcaxCmd)
+		{
+			do
+			{
+				printf("Please enter the PY filename: ");
+				gets_s(szFilename, 1024);
+				len = strlen(szFilename);
+			} while (!(len > 3 && __str_ignore_case_cmp(szFilename + len - 3, ".py") == 0));
+
+			if (tcaxpy_exec_py_script(szFilename) != tcc_error_success)
+			{
+				printf("Info: Task failed!\n");
+			}
             else
-                printf("INFO: Task has been completed!\n\n");
-        } else if (TCAX_CMD_EXEC_PY == tcaxCmd) {
-            do {
-                printf("Please enter the PY filename: ");
-                gets(szFilename);
-                len = strlen(szFilename);
-            }
-            while (!(len > 3 && __str_ignore_case_cmp(szFilename + len - 3, ".py") == 0));
-            if (tcaxpy_exec_py_script(szFilename) != tcc_error_success)
-                printf("INFO: Task failed!\n\n");
-            else
-                printf("INFO: Task has been done!\n\n");
-        } else if (TCAX_CMD_MENU == tcaxCmd) {
+			{
+                printf("Info: Task has been done!\n");
+			}
+        } 
+		else if (TCAX_CMD_MENU == tcaxCmd)
+		{
             printMenu();
-        } else {
-            printf("INFO: Invalid command!\n\n");
+        } 
+		else
+		{
+            printf("Info: Invalid command!\n");
         }
     }
     tcaxpy_fin_python();

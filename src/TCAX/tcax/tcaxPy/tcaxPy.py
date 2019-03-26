@@ -21,7 +21,7 @@
 
 from math    import *
 from random  import *
-from tcaxLib import *
+#from tcaxLib import *
 import sys
 
 ######################################### Global Constant ###################################################
@@ -652,10 +652,10 @@ def iclip2(Scale, Draw):    # deprecated
     return '\\iclip({0},{1})'.format(Scale, Draw)
 
 #--------------------------------------------- Utility Function -------------------------------------------#
-
+"""// ema delete
 def GetVersion():
     print('tcaxLib version: ' + tcaxLibGetVersion() + '\ntcaxPy version: ' + tcaxPy_Version)
-
+"""
 def GetHelp():
     print(GetValueIDsInfo())
 
@@ -687,7 +687,7 @@ def tcaxLog(info):
     logfile.write(b'\xef\xbb\xbf')             # codecs.BOM_UTF8
     logfile.write(s.encode('utf-8'))
     logfile.close()
-
+"""//ema delete
 def Progress(i, j, file_id = 1, file_num = 1):
     total = 0
     for l in range(__tcax_data[val_nLines]):
@@ -700,7 +700,7 @@ def Progress(i, j, file_id = 1, file_num = 1):
 
 def progress(completed, total):
     ShowProgress(total, completed, 0, 1)
-
+"""
 #--------------------------------------------- Advanced Function -------------------------------------------#
 
 def Sum(LIS, I, diff = 0):       # 高级加法函数 在数列LIS里 从第一项累加到第I项

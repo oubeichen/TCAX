@@ -199,7 +199,7 @@ void string_discard_begin_end_white_spaces_and_quote(String *s) {
         count2++;
     }
     if (L'\"' == s->buffer[i]) count2++;
-    count = s->count - count1 - count2;
+    count = ( s->count >= (count1 + count2) ) ? (s->count - count1 - count2) : (0);
     for (i = 0; i < count; i++)
         s->buffer[i] = s->buffer[i + count1];
     memset(s->buffer + count, 0, (s->count - count) * sizeof(wchar_t));

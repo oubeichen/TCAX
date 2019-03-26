@@ -19,7 +19,7 @@
  */
 
 #include "tcasFilter.h"
-
+#pragma comment(lib, "legacy_stdio_definitions.lib")
 
 TcasFilter::TcasFilter(TCHAR *tszName, LPUNKNOWN pUnk, HRESULT *phr) : CTransInPlaceFilter(tszName, pUnk, CLSID_TcasFilter, phr) {
     m_isTcasInitialized = FALSE;

@@ -18,39 +18,42 @@
     <ClCompile Include="avsfilter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\libtcas\trunk\src\alpha\tcas\tcas.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\..\libtcas\trunk\src\alpha\tcas\vector.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="tcasFilter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\libtcas\trunk\src\alpha\tcas\queue.c">
+    <ClCompile Include="..\libtcas\tcas\hla_framer.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\libtcas\trunk\src\alpha\tcas\hla_z_comp.c">
+    <ClCompile Include="..\libtcas\tcas\hla_frame_cache.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\libtcas\trunk\src\alpha\tcas\hla_frame_cache.c">
+    <ClCompile Include="..\libtcas\tcas\hla_z_comp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\libtcas\trunk\src\alpha\tcas\rb.c">
+    <ClCompile Include="..\libtcas\tcas\queue.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\libtcas\trunk\src\alpha\tcas\hla_framer.c">
+    <ClCompile Include="..\libtcas\tcas\rb.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libtcas\tcas\vector.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vsfilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libtcas\tcas\tcas.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="avisynth.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="avsfilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="tcasFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vsfilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

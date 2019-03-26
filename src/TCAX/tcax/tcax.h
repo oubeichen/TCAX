@@ -27,8 +27,9 @@
 #include "./libtm/tm.h"
 #include "./tcaxpy/py.h"
 //#include "../../../../../libtcas/trunk/src/alpha/tcas/tcas.h"
-#include "../../../../../libtcas/trunk/src/alpha/tcas/hla_z_comp.h"
+#include "../../libtcas/tcas/hla_z_comp.h"
 
+#pragma comment (lib, "legacy_stdio_definitions.lib")
 #pragma comment(lib, "./FreeType/freetype248.lib")
 
 #ifndef WIN32
